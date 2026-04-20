@@ -21,3 +21,14 @@ twigSingleQuote: false
 
 It should not modify HTML attributes within Twig comments
 {# <div class="should-not-change"></div> #}
+
+It should preserve double quotes when the string contains Twig interpolation syntax
+{% set peekId = ":#{moulding.id}:-moulding" %}
+{{ some_function("greeting-#{name}") }}
+
+It should preserve single quotes when the string contains literal interpolation syntax to avoid introducing interpolation twigSingleQuote: false
+{% set literal = 'no interpolation #{here}' %}
+
+It should preserve double quotes when the string uses escape sequences
+{{ some_function("line1\nline2") }}
+{% set tabbed = "a\tb" %}

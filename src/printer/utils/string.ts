@@ -75,6 +75,16 @@ export function hasMoreThanOneNewLineBetweenNodes(
  * - Not replace quotes that are escaped
  * - Not replace quotes inside strings that contain the target quote character
  * - Handle nested quotes properly
+ * - Preserve quotes whose style is semantically meaningful in Twig (see below)
+ *
+ * Twig quote semantics:
+ * - Double-quoted strings support `#{...}` expression interpolation and
+ *   escape sequences like `\n`, `\t`, `\r`, `\"`, etc.
+ * - Single-quoted strings are literal — only `\\` and `\'` are treated as
+ *   escape sequences; everything else (including `#{...}`) is literal.
+ *
+ * Converting between styles when these features are present would silently
+ * change program behavior, so we leave such strings untouched.
  */
 export function transformStringQuotes(
   markup: string,
@@ -91,6 +101,30 @@ export function transformStringQuotes(
   return markup.replace(stringRegex, (match) => {
     // Get the content without the outer quotes
     const content = match.slice(1, -1);
+
+    // Twig only interpolates `#{...}` inside double-quoted strings.
+    // Converting either direction would silently change the string's meaning
+    // (a lost interpolation, or a newly introduced one), so preserve the
+    // original quotes when this syntax is present.
+    if (content.includes('#{')) {
+      return match;
+    }
+
+    // Twig only interprets escape sequences beyond `\\` and `\'` inside
+    // double-quoted strings. If the content contains any other backslash
+    // escape (e.g. `\n`, `\t`, `\"`), converting between quote styles would
+    // change the resulting string, so preserve the original quotes.
+    //
+    // Walk the content as a sequence of escape pairs so consecutive
+    // backslashes (`\\`) don't get misread as `\` + next-char.
+    for (let i = 0; i < content.length; i++) {
+      if (content[i] !== '\\') continue;
+      const next = content[i + 1];
+      if (next !== '\\' && next !== "'") {
+        return match;
+      }
+      i += 1;
+    }
 
     // If the content contains the preferred quote (unescaped), keep original quotes
     // to avoid breaking the string
