@@ -353,14 +353,14 @@ describe('Unit: Stage 1 (CST)', () => {
           });
         });
 
-        it('should parse case arguments as a singular liquid expression', () => {
+        it('should parse switch arguments as a singular liquid expression', () => {
           [
             { expression: `"string"`, type: 'String' },
             { expression: `var.lookup`, type: 'VariableLookup' },
           ].forEach(({ expression, type }) => {
-            cst = toCST(`{% case ${expression} -%}`);
+            cst = toCST(`{% switch ${expression} -%}`);
             expectPath(cst, '0.type').to.equal('LiquidTagOpen');
-            expectPath(cst, '0.name').to.equal('case');
+            expectPath(cst, '0.name').to.equal('switch');
             expectPath(cst, '0.markup.type').to.equal(type);
           });
         });
@@ -374,26 +374,22 @@ describe('Unit: Stage 1 (CST)', () => {
           });
         });
 
-        it('should parse when arguments as an array of liquid expressions', () => {
+        it('should parse case arguments as a singular liquid expression', () => {
           [
-            { expression: `"string"`, args: [{ type: 'String' }] },
-            {
-              expression: `"string", var.lookup`,
-              args: [{ type: 'String' }, { type: 'VariableLookup' }],
-            },
-            {
-              expression: `"string" or var.lookup`,
-              args: [{ type: 'String' }, { type: 'VariableLookup' }],
-            },
-          ].forEach(({ expression, args }) => {
-            cst = toCST(`{% when ${expression} -%}`);
+            { expression: `"string"`, type: 'String' },
+            { expression: `var.lookup`, type: 'VariableLookup' },
+          ].forEach(({ expression, type }) => {
+            cst = toCST(`{% case ${expression} -%}`);
             expectPath(cst, '0.type').to.equal('LiquidTag');
-            expectPath(cst, '0.name').to.equal('when');
-            expectPath(cst, '0.markup').to.have.lengthOf(args.length);
-            args.forEach((arg, i) => {
-              expectPath(cst, `0.markup.${i}.type`).to.equal(arg.type);
-            });
+            expectPath(cst, '0.name').to.equal('case');
+            expectPath(cst, '0.markup.type').to.equal(type);
           });
+        });
+
+        it('should parse default as a tag with no markup', () => {
+          cst = toCST(`{% default -%}`);
+          expectPath(cst, '0.type').to.equal('LiquidTag');
+          expectPath(cst, '0.name').to.equal('default');
         });
 
         it('should parse the paginate tag open markup as arguments', () => {

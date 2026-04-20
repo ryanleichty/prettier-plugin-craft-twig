@@ -195,13 +195,13 @@ export type ConcreteLiquidTagOpen =
   | ConcreteLiquidTagOpenBaseCase
   | ConcreteLiquidTagOpenNamed;
 export type ConcreteLiquidTagOpenNamed =
-  | ConcreteLiquidTagOpenCase
   | ConcreteLiquidTagOpenCapture
   | ConcreteLiquidTagOpenIf
   | ConcreteLiquidTagOpenUnless
   | ConcreteLiquidTagOpenForm
   | ConcreteLiquidTagOpenFor
   | ConcreteLiquidTagOpenPaginate
+  | ConcreteLiquidTagOpenSwitch
   | ConcreteLiquidTagOpenTablerow;
 
 export interface ConcreteLiquidTagOpenNode<Name, Markup>
@@ -219,10 +219,13 @@ export interface ConcreteLiquidTagOpenCapture
     ConcreteLiquidVariableLookup
   > {}
 
-export interface ConcreteLiquidTagOpenCase
-  extends ConcreteLiquidTagOpenNode<NamedTags.case, ConcreteLiquidExpression> {}
-export interface ConcreteLiquidTagWhen
-  extends ConcreteLiquidTagNode<NamedTags.when, ConcreteLiquidExpression[]> {}
+export interface ConcreteLiquidTagOpenSwitch
+  extends ConcreteLiquidTagOpenNode<
+    NamedTags.switch,
+    ConcreteLiquidExpression
+  > {}
+export interface ConcreteLiquidTagCase
+  extends ConcreteLiquidTagNode<NamedTags.case, ConcreteLiquidExpression> {}
 
 export interface ConcreteLiquidTagOpenIf
   extends ConcreteLiquidTagOpenNode<NamedTags.if, ConcreteLiquidCondition[]> {}
@@ -294,6 +297,7 @@ export type ConcreteLiquidTag =
   | ConcreteLiquidTagBaseCase;
 export type ConcreteLiquidTagNamed =
   | ConcreteLiquidTagAssign
+  | ConcreteLiquidTagCase
   | ConcreteLiquidTagCycle
   | ConcreteLiquidTagEcho
   | ConcreteLiquidTagIncrement
@@ -305,8 +309,7 @@ export type ConcreteLiquidTagNamed =
   | ConcreteLiquidTagLiquid
   | ConcreteLiquidTagRender
   | ConcreteLiquidTagSection
-  | ConcreteLiquidTagSections
-  | ConcreteLiquidTagWhen;
+  | ConcreteLiquidTagSections;
 
 export interface ConcreteLiquidTagNode<Name, Markup>
   extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidTag> {
@@ -706,10 +709,11 @@ function toCST<T>(
       locEnd,
       source,
     },
-    liquidTagOpenCase: 0,
-    liquidTagOpenCaseMarkup: 0,
-    liquidTagWhen: 0,
-    liquidTagWhenMarkup: 0,
+    liquidTagOpenSwitch: 0,
+    liquidTagOpenSwitchMarkup: 0,
+    liquidTagCase: 0,
+    liquidTagCaseMarkup: 0,
+    liquidTagDefault: 0,
     liquidTagOpenIf: 0,
     liquidTagOpenUnless: 0,
     liquidTagElseif: 0,

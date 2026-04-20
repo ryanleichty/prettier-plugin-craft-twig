@@ -89,9 +89,9 @@ export enum NamedTags {
   render = 'render',
   section = 'section',
   sections = 'sections',
+  switch = 'switch',
   tablerow = 'tablerow',
   unless = 'unless',
-  when = 'when',
 }
 
 export enum Comparators {

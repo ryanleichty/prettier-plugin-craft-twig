@@ -185,7 +185,6 @@ export interface LiquidRawTag extends ASTNode<NodeTypes.LiquidRawTag> {
 export type LiquidTag = LiquidTagNamed | LiquidTagBaseCase;
 export type LiquidTagNamed =
   | LiquidTagAssign
-  | LiquidTagCase
   | LiquidTagCapture
   | LiquidTagCycle
   | LiquidTagDecrement
@@ -201,6 +200,7 @@ export type LiquidTagNamed =
   | LiquidTagRender
   | LiquidTagSection
   | LiquidTagSections
+  | LiquidTagSwitch
   | LiquidTagTablerow
   | LiquidTagUnless;
 
@@ -250,10 +250,10 @@ export interface CycleMarkup extends ASTNode<NodeTypes.CycleMarkup> {
   args: LiquidExpression[];
 }
 
-export interface LiquidTagCase
-  extends LiquidTagNode<NamedTags.case, LiquidExpression> {}
-export interface LiquidBranchWhen
-  extends LiquidBranchNode<NamedTags.when, LiquidExpression[]> {}
+export interface LiquidTagSwitch
+  extends LiquidTagNode<NamedTags.switch, LiquidExpression> {}
+export interface LiquidBranchCase
+  extends LiquidBranchNode<NamedTags.case, LiquidExpression> {}
 
 export interface LiquidTagForm
   extends LiquidTagNode<NamedTags.form, LiquidArgument[]> {}
@@ -338,9 +338,9 @@ export type LiquidBranch =
   | LiquidBranchBaseCase
   | LiquidBranchNamed;
 export type LiquidBranchNamed =
+  | LiquidBranchCase
   | LiquidBranchElseif
-  | LiquidBranchElsif
-  | LiquidBranchWhen;
+  | LiquidBranchElsif;
 
 interface LiquidBranchNode<Name, Markup>
   extends ASTNode<NodeTypes.LiquidBranch> {
@@ -556,7 +556,7 @@ interface ASTBuildOptions {
 export function isBranchedTag(node: LiquidHtmlNode) {
   return (
     node.type === NodeTypes.LiquidTag &&
-    ['if', 'for', 'unless', 'case'].includes(node.name)
+    ['if', 'for', 'unless', 'switch'].includes(node.name)
   );
 }
 
@@ -566,16 +566,18 @@ function isLiquidBranchDisguisedAsTag(
 ): node is LiquidTagBaseCase {
   return (
     node.type === NodeTypes.LiquidTag &&
-    ['else', 'elseif', 'elsif', 'when'].includes(node.name)
+    ['case', 'default', 'else', 'elseif', 'elsif'].includes(node.name)
   );
 }
 
 function isConcreteLiquidBranchDisguisedAsTag(
   node: LiquidHtmlConcreteNode,
-): node is ConcreteLiquidNode & { name: 'else' | 'elseif' | 'eslif' | 'when' } {
+): node is ConcreteLiquidNode & {
+  name: 'case' | 'default' | 'else' | 'elseif' | 'eslif';
+} {
   return (
     node.type === ConcreteNodeTypes.LiquidTag &&
-    ['else', 'elseif', 'eslif', 'when'].includes(node.name)
+    ['case', 'default', 'else', 'elseif', 'eslif'].includes(node.name)
   );
 }
 
@@ -1198,7 +1200,7 @@ function toNamedLiquidTag(
       };
     }
 
-    case NamedTags.case: {
+    case NamedTags.switch: {
       return {
         ...liquidTagBaseAttributes(node),
         name: node.name,
@@ -1207,11 +1209,11 @@ function toNamedLiquidTag(
       };
     }
 
-    case NamedTags.when: {
+    case NamedTags.case: {
       return {
         ...liquidBranchBaseAttributes(node),
         name: node.name,
-        markup: node.markup.map(toExpression),
+        markup: toExpression(node.markup),
       };
     }
 
@@ -1741,7 +1743,7 @@ function isAcceptingDanglingMarkers(
   return (
     parent.type === NodeTypes.LiquidBranch &&
     grandparent.type === NodeTypes.LiquidTag &&
-    ['if', 'unless', 'case'].includes(grandparent.name) &&
+    ['if', 'unless', 'switch'].includes(grandparent.name) &&
     builder.current.every((node) => node.type === DanglingMapping[nodeType])
   );
 }

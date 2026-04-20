@@ -1,0 +1,37 @@
+It should format a basic switch/case/default/endswitch block
+{% switch media.kind %}
+  {% case 'image' %}
+    {% include '_components/image' with { asset: media } only %}
+  {% case 'video' %}
+    {% include '_components/video' with { asset: media } only %}
+  {% default %}
+    Nothing to show
+{% endswitch %}
+
+It should handle switch inside an if block
+{% if media %}
+  {% switch media.kind %}
+    {% case 'image' %}
+      {% include '_components/image' with { asset: media } only %}
+    {% case 'video' %}
+      {% include '_components/video' with { asset: media } only %}
+  {% endswitch %}
+{% endif %}
+
+It should format case branches with variable lookups
+{% switch state %}
+  {% case status.active %}
+    active
+  {% case status.pending %}
+    pending
+{% endswitch %}
+
+It should preserve whitespace control markers
+{%- switch x -%}
+  {%- case 'a' -%}
+    a
+  {%- case 'b' -%}
+    b
+  {%- default -%}
+    c
+{%- endswitch -%}

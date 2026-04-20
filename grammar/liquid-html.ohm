@@ -48,9 +48,11 @@ Liquid <: Helpers {
   liquidTagStrict =
     | liquidTagAssign
     | liquidTagBreak
+    | liquidTagCase
     | liquidTagContinue
     | liquidTagCycle
     | liquidTagDecrement
+    | liquidTagDefault
     | liquidTagEcho
     | liquidTagElse
     | liquidTagElseif
@@ -62,20 +64,19 @@ Liquid <: Helpers {
     | liquidTagRender
     | liquidTagSection
     | liquidTagSections
-    | liquidTagWhen
 
   liquidTag =
     | liquidTagStrict
     | liquidTagBaseCase
 
   liquidTagOpenStrict =
-    | liquidTagOpenCase
     | liquidTagOpenCapture
     | liquidTagOpenForm
     | liquidTagOpenFor
     | liquidTagOpenTablerow
     | liquidTagOpenIf
     | liquidTagOpenPaginate
+    | liquidTagOpenSwitch
     | liquidTagOpenUnless
 
   liquidTagOpen =
@@ -148,12 +149,13 @@ Liquid <: Helpers {
   // It's the same, the difference is support for different named arguments
   liquidTagOpenTablerow = liquidTagOpenRule<"tablerow", liquidTagOpenForMarkup>
 
-  liquidTagOpenCase = liquidTagOpenRule<"case", liquidTagOpenCaseMarkup>
-  liquidTagOpenCaseMarkup = liquidExpression space*
+  liquidTagOpenSwitch = liquidTagOpenRule<"switch", liquidTagOpenSwitchMarkup>
+  liquidTagOpenSwitchMarkup = liquidExpression space*
 
-  liquidTagWhen = liquidTagRule<"when", liquidTagWhenMarkup>
-  liquidTagWhenMarkup = nonemptyListOf<liquidExpression, whenMarkupSep> space*
-  whenMarkupSep = space* ("," | "or" ~identifier) space*
+  liquidTagCase = liquidTagRule<"case", liquidTagCaseMarkup>
+  liquidTagCaseMarkup = liquidExpression space*
+
+  liquidTagDefault = liquidTagRule<"default", empty>
 
   liquidTagOpenIf = liquidTagOpenRule<"if", liquidTagOpenConditionalMarkup>
   liquidTagOpenUnless = liquidTagOpenRule<"unless", liquidTagOpenConditionalMarkup>
@@ -278,10 +280,10 @@ Liquid <: Helpers {
     | "paginate"
     // Base blocks
     | "capture"
-    | "case"
     | "for"
     | "ifchanged"
     | "if"
+    | "switch"
     | "unless"
     | "tablerow"
     | "block"

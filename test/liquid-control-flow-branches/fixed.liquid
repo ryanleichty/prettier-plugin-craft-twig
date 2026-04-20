@@ -22,20 +22,20 @@
   {% endunless %}
 </div>
 
-It should indent when statements and their children
+It should indent case statements and their children
 <div>
-  {% case pastry %}
-    {% when 'oopsie' %}
+  {% switch pastry %}
+    {% case 'oopsie' %}
 
-    {% when 'croissant' %}
+    {% case 'croissant' %}
       Mmmm
-    {% when 'muffin' %}
+    {% case 'muffin' %}
       Yea. Alright.
-    {% when 'veggie' %}
+    {% case 'veggie' %}
       That's not a pastry!
-    {% else %}
+    {% default %}
       What do you want?
-  {% endcase %}
+  {% endswitch %}
 </div>
 
 When there's a TextNode child, it should format the children as a paragraph

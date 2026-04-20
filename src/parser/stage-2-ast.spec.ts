@@ -570,13 +570,13 @@ describe('Unit: Stage 2 (AST)', () => {
         expectPath(ast, 'children.0.markup').to.eql('hello world');
       });
 
-      it(`${title} - should parse liquid case as branches`, () => {
-        ast = toAST(`{% case A %}{% when A %}A{% when "B" %}B{% else    %}C{% endcase %}`);
+      it(`${title} - should parse twig switch as branches`, () => {
+        ast = toAST(`{% switch A %}{% case A %}A{% case "B" %}B{% default %}C{% endswitch %}`);
         expectPath(ast, 'children.0').to.exist;
         expectPath(ast, 'children.0.type').to.eql('LiquidTag');
-        expectPath(ast, 'children.0.name').to.eql('case');
+        expectPath(ast, 'children.0.name').to.eql('switch');
 
-        // There's an empty child node between the case and first when. That's OK (?)
+        // There's an empty child node between the switch and first case. That's OK (?)
         // What if there's whitespace? I think that's a printer problem. If
         // there's freeform text we should somehow catch it.
         expectPath(ast, 'children.0.children.0').to.exist;
@@ -585,20 +585,19 @@ describe('Unit: Stage 2 (AST)', () => {
 
         expectPath(ast, 'children.0.children.1').to.exist;
         expectPath(ast, 'children.0.children.1.type').to.eql('LiquidBranch');
-        expectPath(ast, 'children.0.children.1.name').to.eql('when');
-        expectPath(ast, 'children.0.children.1.markup').to.have.lengthOf(1);
-        expectPath(ast, 'children.0.children.1.markup.0.type').to.equal('VariableLookup');
+        expectPath(ast, 'children.0.children.1.name').to.eql('case');
+        expectPath(ast, 'children.0.children.1.markup.type').to.equal('VariableLookup');
         expectPath(ast, 'children.0.children.1.children.0.type').to.eql('TextNode');
         expectPath(ast, 'children.0.children.1.children.0.value').to.eql('A');
 
         expectPath(ast, 'children.0.children.2.type').to.eql('LiquidBranch');
-        expectPath(ast, 'children.0.children.2.name').to.eql('when');
-        expectPath(ast, 'children.0.children.2.markup.0.type').to.equal('String');
+        expectPath(ast, 'children.0.children.2.name').to.eql('case');
+        expectPath(ast, 'children.0.children.2.markup.type').to.equal('String');
         expectPath(ast, 'children.0.children.2.children.0.type').to.eql('TextNode');
         expectPath(ast, 'children.0.children.2.children.0.value').to.eql('B');
 
         expectPath(ast, 'children.0.children.3.type').to.eql('LiquidBranch');
-        expectPath(ast, 'children.0.children.3.name').to.eql('else');
+        expectPath(ast, 'children.0.children.3.name').to.eql('default');
         expectPath(ast, 'children.0.children.3.markup').to.eql('');
         expectPath(ast, 'children.0.children.3.children.0.type').to.eql('TextNode');
         expectPath(ast, 'children.0.children.3.children.0.value').to.eql('C');
@@ -737,7 +736,7 @@ describe('Unit: Stage 2 (AST)', () => {
         '{% if cond %}<div><a>{% endif %}',
         '{% if cond %}{% else %}<div><a>{% endif %}',
         '{% if cond %}{% elsif cond %}<div><a>{% endif %}',
-        '{% case cond %}{% when %}<div><a>{% endcase %}',
+        '{% switch cond %}{% case "a" %}<div><a>{% endswitch %}',
       ];
       for (const testCase of testCases) {
         expect(() => toLiquidHtmlAST(testCase), testCase).not.to.throw();
@@ -748,7 +747,7 @@ describe('Unit: Stage 2 (AST)', () => {
         '{% if cond %}<a><b><c>{% endif %}',
         '{% if cond %}{% else %}<a><b><c>{% endif %}',
         '{% if cond %}{% elsif cond %}<a><b><c>{% endif %}',
-        '{% case cond %}{% when %}<a><b><c>{% endcase %}',
+        '{% switch cond %}{% case "a" %}<a><b><c>{% endswitch %}',
       ];
       for (const testCase of testCases) {
         expect(() => toLiquidHtmlAST(testCase), testCase).to.throw(
@@ -764,7 +763,7 @@ describe('Unit: Stage 2 (AST)', () => {
         '{% if cond %}{% else %}<b><a>hi</a>{% endif %}',
         '{% if cond %}{% elsif cond %}<a>hi</a><b>{% endif %}',
         '{% if cond %}{% elsif cond %}<b><a>hi</a>{% endif %}',
-        '{% case cond %}{% when %}<a>hi</a><b>{% endcase %}',
+        '{% switch cond %}{% case "a" %}<a>hi</a><b>{% endswitch %}',
       ];
       for (const testCase of testCases) {
         expect(() => toLiquidHtmlAST(testCase), testCase).to.throw(
