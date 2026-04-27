@@ -7,6 +7,7 @@ export const TWIG_CRAFT_PAIRED_TAGS = [
   'for',
   'html',
   'if',
+  'ifchildren',
   'js',
   'macro',
   'namespace',

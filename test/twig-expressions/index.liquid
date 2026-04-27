@@ -7,3 +7,9 @@ printWidth: 20
 
 It should keep raw Craft expressions tolerant
 {{ craft.entries.section('blog').eagerly().one() ??? null }}
+
+It should format raw object filter chains in drops
+{{ { 'redirects': redirects } | json_encode | raw }}
+
+It should preserve Twig Elvis operators
+{{ fullName ?  : roleAndCompany }}

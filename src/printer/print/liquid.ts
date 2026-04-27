@@ -108,6 +108,9 @@ export function printLiquidDrop(
 }
 
 function printSingleLineRawMarkup(markup: string): Doc {
+  const expression = printRawTwigExpression(markup);
+  if (expression) return expression;
+
   const objectLiteral = getObjectLiteralRange(markup);
   if (!objectLiteral) return markup;
 
@@ -630,7 +633,8 @@ function printRawTwigFilter(filter: string): Doc {
   const args = printRawTwigFilterArguments(call.args);
   if (!args) return filter;
 
-  return group([call.name, '(', args, softline, ')']);
+  const hasArrowArgument = splitTopLevelOperator(call.args, '=>') !== null;
+  return group([call.name, '(', args, hasArrowArgument ? softline : '', ')']);
 }
 
 function parseRawTwigFilterCall(filter: string) {
@@ -644,8 +648,19 @@ function parseRawTwigFilterCall(filter: string) {
 }
 
 function printRawTwigFilterArguments(args: string): Doc | null {
+  if (args.trim() === '') return '';
+
   const arrow = splitTopLevelOperator(args, '=>');
-  if (!arrow) return null;
+  if (!arrow) {
+    const positionalArgs = splitTwigTopLevelProperties(args);
+    if (!positionalArgs) return null;
+
+    if (positionalArgs.length === 1) {
+      return printRawTwigArgument(positionalArgs[0]);
+    }
+
+    return group(join([',', line], positionalArgs.map(printRawTwigArgument)));
+  }
 
   const body = printRawTwigExpression(arrow.right);
   if (!body) return null;
@@ -655,6 +670,7 @@ function printRawTwigFilterArguments(args: string): Doc | null {
 
 function printRawTwigExpression(expression: string): Doc | null {
   return (
+    printRawTwigElvisExpression(expression) ??
     printRawTwigTernary(expression) ??
     printRawTwigCoalescingChain(expression) ??
     printRawTwigParenthesizedExpression(expression) ??
@@ -664,6 +680,13 @@ function printRawTwigExpression(expression: string): Doc | null {
     printRawTwigArrayLiteral(expression) ??
     printRawTwigObjectLiteral(expression)
   );
+}
+
+function printRawTwigElvisExpression(expression: string): Doc | null {
+  const elvis = splitTopLevelElvisOperator(expression);
+  if (!elvis) return null;
+
+  return group([elvis.left, ' ?: ', printRawTwigExpression(elvis.right) ?? elvis.right]);
 }
 
 function printRawTwigCoalescingChain(expression: string): Doc | null {
@@ -688,6 +711,7 @@ function printRawTwigCoalescingChain(expression: string): Doc | null {
 
 function printRawTwigNonCoalescingExpression(expression: string): Doc | null {
   return (
+    printRawTwigElvisExpression(expression) ??
     printRawTwigTernary(expression) ??
     printRawTwigParenthesizedExpression(expression) ??
     printRawTwigMethodChainExpression(expression) ??
@@ -710,6 +734,7 @@ function printRawTwigParenthesizedExpression(expression: string): Doc | null {
 
 function printRawTwigNonParenthesizedExpression(expression: string): Doc | null {
   return (
+    printRawTwigElvisExpression(expression) ??
     printRawTwigTernary(expression) ??
     printRawTwigMethodChainExpression(expression) ??
     printRawTwigCallExpression(expression) ??
@@ -778,8 +803,8 @@ function printRawTwigCallExpression(expression: string): Doc | null {
   return group([
     call.name,
     '(',
-    indent([line, join([',', line], args.map(printRawTwigArgument))]),
-    line,
+    indent([softline, join([',', line], args.map(printRawTwigArgument))]),
+    softline,
     ')',
   ]);
 }
@@ -907,6 +932,50 @@ function splitTopLevelTernary(source: string) {
     consequent: source.slice(questionIndex + 1, colonIndex).trim(),
     alternate: source.slice(colonIndex + 1).trim(),
   };
+}
+
+function splitTopLevelElvisOperator(source: string) {
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      nestingLevel += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      nestingLevel -= 1;
+    } else if (nestingLevel === 0 && char === '?') {
+      let colonIndex = i + 1;
+      while (/\s/.test(source[colonIndex] ?? '')) colonIndex += 1;
+      if (source[colonIndex] === ':') {
+        return {
+          left: source.slice(0, i).trim(),
+          right: source.slice(colonIndex + 1).trim(),
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 function findMatchingTernaryColon(source: string, start: number): number | null {

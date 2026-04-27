@@ -14,6 +14,11 @@ It should indent Craft cache and nav bodies
 {% cache using key 'example' %}
   {% nav entry in entries %}
     <a href="{{ entry.url }}">{{ entry.title }}</a>
+    {% ifchildren %}
+      <ul>
+        {% children %}
+      </ul>
+    {% endifchildren %}
   {% endnav %}
 {% endcache %}
 

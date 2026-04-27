@@ -522,7 +522,10 @@ interface ASTBuildOptions {
 }
 
 export function isBranchedTag(node: LiquidHtmlNode) {
-  return node.type === NodeTypes.LiquidTag && ['if', 'for', 'unless', 'switch'].includes(node.name);
+  return (
+    node.type === NodeTypes.LiquidTag &&
+    ['if', 'for', 'ifchildren', 'unless', 'switch'].includes(node.name)
+  );
 }
 
 // Not exported because you can use node.type === NodeTypes.LiquidBranch.

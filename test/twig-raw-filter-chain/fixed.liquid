@@ -5,7 +5,7 @@ It should wrap filters in raw set markup when they exceed printWidth
 printWidth: 60
 {%
   set getWidth = (profile) => profile.width.valuePartsFraction()
-    |slice(0,2)
+    |slice(0, 2)
     |filter
     |join(' ')
     |fractions
@@ -15,7 +15,7 @@ It should preserve wrapped filter indentation in raw set markup
 printWidth: 60
 {%
   set getWidth = (profile) => profile.width.valuePartsFraction()
-    |slice(0,2)
+    |slice(0, 2)
     |filter
     |join(' ')
     |fractions
