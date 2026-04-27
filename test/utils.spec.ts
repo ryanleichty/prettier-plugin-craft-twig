@@ -38,12 +38,10 @@ describe('Module: utils', () => {
           'foo("line1\\nline2")',
         );
         expect(transformStringQuotes('foo("tab\\there")', true)).to.equal('foo("tab\\there")');
-        expect(transformStringQuotes('foo("quote\\"here")', true)).to.equal(
-          'foo("quote\\"here")',
-        );
+        expect(transformStringQuotes('foo("quote\\"here")', true)).to.equal('foo("quote\\"here")');
       });
 
-      it('should still convert when content only uses \\\\ or \\\' escapes', () => {
+      it("should still convert when content only uses \\\\ or \\' escapes", () => {
         // Both single- and double-quoted strings interpret \\ the same way (literal backslash).
         expect(transformStringQuotes('foo("back\\\\slash")', true)).to.equal(
           "foo('back\\\\slash')",
@@ -67,9 +65,7 @@ describe('Module: utils', () => {
       it('should preserve single quotes when content contains #{...} literal', () => {
         // `#{x}` inside single quotes is literal characters. Converting to
         // double quotes would accidentally enable interpolation.
-        expect(transformStringQuotes("foo('literal #{x}')", false)).to.equal(
-          "foo('literal #{x}')",
-        );
+        expect(transformStringQuotes("foo('literal #{x}')", false)).to.equal("foo('literal #{x}')");
       });
 
       it('should leave double-quoted strings unchanged', () => {

@@ -4,7 +4,7 @@
   "tabWidth": 2,
   "semi": true,
   "singleQuote": true,
-  "printWidth": 80,
+  "printWidth": 100,
   "overrides": [
     {
       "files": "*.spec.ts",
@@ -13,10 +13,10 @@
       }
     },
     {
-      "files": "*.liquid",
+      "files": "*.twig",
       "options": {
         "singleQuote": false,
-        "printWidth": 80
+        "printWidth": 100
       }
     }
   ]
