@@ -26,3 +26,10 @@ It should indent embed and with bodies
 {% with { profile: profiles[0] } %}
   {{ profile.title }}
 {% endwith %}
+
+It should remove an empty line after an opening HTML tag
+<div>
+  {% if heading %}
+    <h3>{{ heading }}</h3>
+  {% endif %}
+</div>

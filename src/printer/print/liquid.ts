@@ -49,8 +49,7 @@ import { printChildren } from '~/printer/print/children';
 const LIQUID_TAGS_THAT_ALWAYS_BREAK = ['for', 'switch'];
 
 const { builders, utils } = doc;
-const { group, hardline, ifBreak, indent, join, line, softline, literalline } =
-  builders;
+const { group, hardline, ifBreak, indent, join, line, softline, literalline } = builders;
 const { replaceEndOfLine } = doc.utils as any;
 
 export function printLiquidDrop(
@@ -84,10 +83,7 @@ export function printLiquidDrop(
   }
 
   // Transform quotes in base case markup based on twigSingleQuote option
-  const markup = transformStringQuotes(
-    node.markup,
-    getTwigSingleQuote(options),
-  );
+  const markup = transformStringQuotes(node.markup, getTwigSingleQuote(options));
 
   const lines = markupLines(markup);
   if (lines.length > 1) {
@@ -128,10 +124,7 @@ function printSingleLineRawMarkup(markup: string): Doc {
   ]);
 }
 
-function printRawMarkupLines(
-  lines: string[],
-  options: LiquidParserOptions,
-): string[] {
+function printRawMarkupLines(lines: string[], options: LiquidParserOptions): string[] {
   let nestingLevel = 0;
   const indentUnit = options.useTabs ? '\t' : ' '.repeat(options.tabWidth ?? 2);
 
@@ -140,13 +133,11 @@ function printRawMarkupLines(
     if (!trimmed) return '';
 
     const leadingClosers = countLeadingClosingBrackets(trimmed);
-    const lineLevel =
-      index === 0 ? 0 : Math.max(nestingLevel - leadingClosers, 0);
+    const lineLevel = index === 0 ? 0 : Math.max(nestingLevel - leadingClosers, 0);
 
     nestingLevel = Math.max(nestingLevel + bracketNestingDelta(trimmed), 0);
 
-    const printedLine =
-      lineLevel > 0 ? formatTwigObjectProperty(trimmed) : trimmed;
+    const printedLine = lineLevel > 0 ? formatTwigObjectProperty(trimmed) : trimmed;
 
     return indentUnit.repeat(lineLevel) + printedLine;
   });
@@ -265,11 +256,7 @@ function printNamedLiquidBlockStart(
       return {
         wrapper: group,
         prefix: ['{%', whitespaceStart, ' '],
-        suffix: (trailingWhitespace: Doc) => [
-          trailingWhitespace,
-          whitespaceEnd,
-          '%}',
-        ],
+        suffix: (trailingWhitespace: Doc) => [trailingWhitespace, whitespaceEnd, '%}'],
       };
     }
   })();
@@ -304,8 +291,7 @@ function printNamedLiquidBlockStart(
     }
 
     case NamedTags.assign: {
-      const trailingWhitespace =
-        node.markup.value.filters.length > 0 ? line : ' ';
+      const trailingWhitespace = node.markup.value.filters.length > 0 ? line : ' ';
       return tag(trailingWhitespace);
     }
 
@@ -325,9 +311,7 @@ function printNamedLiquidBlockStart(
     case NamedTags.render: {
       const markup = node.markup;
       const trailingWhitespace =
-        markup.args.length > 0 || (markup.variable && markup.alias)
-          ? line
-          : ' ';
+        markup.args.length > 0 || (markup.variable && markup.alias) ? line : ' ';
       return tag(trailingWhitespace);
     }
 
@@ -349,8 +333,7 @@ function printNamedLiquidBlockStart(
 
     case NamedTags.tablerow:
     case NamedTags.for: {
-      const trailingWhitespace =
-        node.markup.reversed || node.markup.args.length > 0 ? line : ' ';
+      const trailingWhitespace = node.markup.reversed || node.markup.args.length > 0 ? line : ' ';
       return tag(trailingWhitespace);
     }
 
@@ -362,10 +345,9 @@ function printNamedLiquidBlockStart(
     case NamedTags.elseif:
     case NamedTags.elsif:
     case NamedTags.unless: {
-      const trailingWhitespace = [
-        NodeTypes.Comparison,
-        NodeTypes.LogicalExpression,
-      ].includes(node.markup.type)
+      const trailingWhitespace = [NodeTypes.Comparison, NodeTypes.LogicalExpression].includes(
+        node.markup.type,
+      )
         ? line
         : ' ';
       return tag(trailingWhitespace);
@@ -413,18 +395,10 @@ function printLiquidStatement(
   _args: LiquidPrinterArgs,
 ): Doc {
   const node = path.getValue();
-  const transformedMarkup = transformStringQuotes(
-    node.markup,
-    getTwigSingleQuote(options),
-  );
+  const transformedMarkup = transformStringQuotes(node.markup, getTwigSingleQuote(options));
   const shouldSkipLeadingSpace =
-    transformedMarkup.trim() === '' ||
-    (node.name === '#' && transformedMarkup.startsWith('#'));
-  return doc.utils.removeLines([
-    node.name,
-    shouldSkipLeadingSpace ? '' : ' ',
-    transformedMarkup,
-  ]);
+    transformedMarkup.trim() === '' || (node.name === '#' && transformedMarkup.startsWith('#'));
+  return doc.utils.removeLines([node.name, shouldSkipLeadingSpace ? '' : ' ', transformedMarkup]);
 }
 
 export function printLiquidBlockStart(
@@ -494,10 +468,7 @@ export function printLiquidBlockStart(
   }
 
   // Transform quotes in base case markup based on twigSingleQuote option
-  const transformedMarkup = transformStringQuotes(
-    node.markup,
-    getTwigSingleQuote(options),
-  );
+  const transformedMarkup = transformStringQuotes(node.markup, getTwigSingleQuote(options));
   const lines = markupLines(transformedMarkup);
 
   if (node.name === 'liquid') {
@@ -561,22 +532,19 @@ export function printLiquidBlockStart(
   ]);
 }
 
-function printMultilineRawTagMarkup(
-  lines: string[],
-  options: LiquidParserOptions,
-): Doc | null {
+function printMultilineRawTagMarkup(lines: string[], options: LiquidParserOptions): Doc | null {
   const markup = reindent(lines, true)
     .map((line) => line.trim())
     .filter(Boolean)
     .join(' ');
 
+  const assignment = printRawTwigAssignment(markup);
+  if (assignment) return assignment;
+
   return printSingleLineRawTagMarkup(markup, options);
 }
 
-function printSingleLineRawTagMarkup(
-  markup: string,
-  options: LiquidParserOptions,
-): Doc | null {
+function printSingleLineRawTagMarkup(markup: string, options: LiquidParserOptions): Doc | null {
   const parsedExpression = parseTwigExpression(markup);
   if (!parsedExpression) return null;
 
@@ -604,13 +572,8 @@ function printSingleLineRawTagMarkup(
   ]);
 }
 
-function printRawTwigIncludeMarkup(
-  markup: string,
-  { shouldBreak = false } = {},
-): Doc | null {
-  const match = /^([\s\S]+?)\s+with\s+(\{[\s\S]+\})(\s+only)?$/.exec(
-    markup.trim(),
-  );
+function printRawTwigIncludeMarkup(markup: string, { shouldBreak = false } = {}): Doc | null {
+  const match = /^([\s\S]+?)\s+with\s+(\{[\s\S]+\})(\s+only)?$/.exec(markup.trim());
   if (!match) return null;
 
   const variables = printRawTwigObjectLiteral(match[2], { shouldBreak });
@@ -631,9 +594,19 @@ function printRawTwigAssignment(markup: string): Doc | null {
     return group([assignment.left, ' =', indent([line, ternaryValue])]);
   }
 
+  const coalescingValue = printRawTwigCoalescingChain(assignment.right);
+  if (coalescingValue) {
+    return group([assignment.left, ' =', indent([line, coalescingValue])]);
+  }
+
   const methodChainValue = printRawTwigMethodChainExpression(assignment.right);
   if (methodChainValue) {
     return group([assignment.left, ' = ', methodChainValue]);
+  }
+
+  const filterChainValue = printRawTwigFilterChainExpression(assignment.right);
+  if (filterChainValue) {
+    return group([assignment.left, ' = ', filterChainValue]);
   }
 
   return null;
@@ -682,10 +655,28 @@ function printRawTwigFilterArguments(args: string): Doc | null {
 function printRawTwigExpression(expression: string): Doc | null {
   return (
     printRawTwigTernary(expression) ??
+    printRawTwigCoalescingChain(expression) ??
     printRawTwigMethodChainExpression(expression) ??
     printRawTwigCallExpression(expression) ??
     printRawTwigFilterChainExpression(expression) ??
+    printRawTwigArrayLiteral(expression) ??
     printRawTwigObjectLiteral(expression)
+  );
+}
+
+function printRawTwigCoalescingChain(expression: string): Doc | null {
+  const chain = splitRawTwigCoalescingChain(expression);
+  if (!chain) return null;
+
+  return group(
+    join(
+      line,
+      chain.map((part, index) =>
+        index < chain.length - 1
+          ? [part.expression, ' ', chain[index + 1].operator!]
+          : part.expression,
+      ),
+    ),
   );
 }
 
@@ -695,7 +686,7 @@ function printRawTwigFilterChainExpression(expression: string): Doc | null {
 
   const [baseExpression, ...filters] = filterChain;
   return group([
-    baseExpression,
+    printRawTwigNonTernaryExpression(baseExpression) ?? baseExpression,
     indent([
       softline,
       join(
@@ -703,6 +694,31 @@ function printRawTwigFilterChainExpression(expression: string): Doc | null {
         filters.map((filter) => ['|', printRawTwigFilter(filter)]),
       ),
     ]),
+  ]);
+}
+
+function printRawTwigArrayLiteral(expression: string): Doc | null {
+  const trimmed = expression.trim();
+  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return null;
+
+  const body = trimmed.slice(1, -1);
+  if (body.trim() === '') return '[]';
+
+  const items = splitTwigTopLevelProperties(body);
+  if (!items) return null;
+
+  return group([
+    '[',
+    indent([
+      softline,
+      join(
+        [',', line],
+        items.map((item) => printRawTwigExpression(item) ?? item.trim()),
+      ),
+      ifBreak(','),
+    ]),
+    softline,
+    ']',
   ]);
 }
 
@@ -733,10 +749,7 @@ function printRawTwigArgument(argument: string): Doc {
   return printRawTwigExpression(argument) ?? argument.trim();
 }
 
-function printRawTwigObjectLiteral(
-  expression: string,
-  { shouldBreak = false } = {},
-): Doc | null {
+function printRawTwigObjectLiteral(expression: string, { shouldBreak = false } = {}): Doc | null {
   const trimmed = expression.trim();
   if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
 
@@ -752,6 +765,7 @@ function printRawTwigObjectLiteral(
           [',', line],
           properties.map((property) => printRawTwigObjectProperty(property)),
         ),
+        ifBreak(','),
       ]),
       line,
       '}',
@@ -785,8 +799,7 @@ function printRawTwigTernary(expression: string): Doc | null {
     ...restCases.map((ternaryCase) => [
       ternaryCase.condition,
       ' ? ',
-      printRawTwigNonTernaryExpression(ternaryCase.consequent) ??
-        ternaryCase.consequent,
+      printRawTwigNonTernaryExpression(ternaryCase.consequent) ?? ternaryCase.consequent,
       ' :',
     ]),
     printRawTwigNonTernaryExpression(chain.fallback) ?? chain.fallback,
@@ -795,8 +808,7 @@ function printRawTwigTernary(expression: string): Doc | null {
   return group([
     firstCase.condition,
     ' ? ',
-    printRawTwigNonTernaryExpression(firstCase.consequent) ??
-      firstCase.consequent,
+    printRawTwigNonTernaryExpression(firstCase.consequent) ?? firstCase.consequent,
     ' :',
     line,
     join(line, restLines),
@@ -807,6 +819,7 @@ function printRawTwigNonTernaryExpression(expression: string): Doc | null {
   return (
     printRawTwigCallExpression(expression) ??
     printRawTwigFilterChainExpression(expression) ??
+    printRawTwigArrayLiteral(expression) ??
     printRawTwigObjectLiteral(expression)
   );
 }
@@ -857,10 +870,7 @@ function splitTopLevelTernary(source: string) {
   };
 }
 
-function findMatchingTernaryColon(
-  source: string,
-  start: number,
-): number | null {
+function findMatchingTernaryColon(source: string, start: number): number | null {
   let ternaryDepth = 0;
   let nestingLevel = 0;
   let quote: '"' | "'" | null = null;
@@ -980,11 +990,7 @@ function splitRawTwigMethodChain(source: string) {
       nestingLevel += 1;
     } else if (char === ')' || char === ']' || char === '}') {
       nestingLevel -= 1;
-    } else if (
-      nestingLevel === 0 &&
-      char === '.' &&
-      /^[A-Za-z_]/.test(source[i + 1] ?? '')
-    ) {
+    } else if (nestingLevel === 0 && char === '.' && /^[A-Za-z_]/.test(source[i + 1] ?? '')) {
       const callEnd = readRawTwigMethodCall(source, i);
       if (callEnd === null) continue;
 
@@ -1055,6 +1061,102 @@ function readRawTwigMethodCall(source: string, start: number): number | null {
   return null;
 }
 
+function splitRawTwigCoalescingChain(source: string) {
+  const parts: { expression: string; operator?: '??' | '???' }[] = [];
+  let start = 0;
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      nestingLevel += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      nestingLevel -= 1;
+    } else if (nestingLevel === 0 && source.startsWith('???', i)) {
+      parts.push({ expression: source.slice(start, i).trim() });
+      start = i + 3;
+      i += 2;
+    } else if (nestingLevel === 0 && source.startsWith('??', i)) {
+      parts.push({ expression: source.slice(start, i).trim() });
+      start = i + 2;
+      i += 1;
+    }
+  }
+
+  if (parts.length === 0) return null;
+
+  const operators = collectTopLevelCoalescingOperators(source);
+  const lastExpression = source.slice(start).trim();
+  if (!lastExpression || operators.length !== parts.length) return null;
+
+  parts.push({ expression: lastExpression });
+  return parts.map((part, index) =>
+    index === 0 ? part : { ...part, operator: operators[index - 1] },
+  );
+}
+
+function collectTopLevelCoalescingOperators(source: string): ('??' | '???')[] {
+  const operators: ('??' | '???')[] = [];
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      nestingLevel += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      nestingLevel -= 1;
+    } else if (nestingLevel === 0 && source.startsWith('???', i)) {
+      operators.push('???');
+      i += 2;
+    } else if (nestingLevel === 0 && source.startsWith('??', i)) {
+      operators.push('??');
+      i += 1;
+    }
+  }
+
+  return operators;
+}
+
 function findTopLevelOperator(source: string, operator: string): number | null {
   let nestingLevel = 0;
   let quote: '"' | "'" | null = null;
@@ -1114,21 +1216,12 @@ export function printLiquidBlockEnd(
     hasMeaningfulLackOfTrailingWhitespace(node),
     trailingSpaceGroupId,
   );
-  return group([
-    '{%',
-    whitespaceStart,
-    ` end${node.name} `,
-    whitespaceEnd,
-    '%}',
-  ]);
+  return group(['{%', whitespaceStart, ` end${node.name} `, whitespaceEnd, '%}']);
 }
 
 function getNodeContent(node: LiquidTag) {
   if (!node.children || !node.blockEndPosition) return '';
-  return node.source.slice(
-    node.blockStartPosition.end,
-    node.blockEndPosition.start,
-  );
+  return node.source.slice(node.blockStartPosition.end, node.blockEndPosition.start);
 }
 
 export function printLiquidTag(
@@ -1197,17 +1290,14 @@ export function printLiquidTag(
     ]);
   }
 
-  return group(
-    [blockStart, body, innerTrailingWhitespace(node, args), blockEnd],
-    {
-      id: tagGroupId,
-      shouldBreak:
-        LIQUID_TAGS_THAT_ALWAYS_BREAK.includes(node.name) ||
-        originallyHadLineBreaks(path, options) ||
-        isAttributeNode(node) ||
-        isDeeplyNested(node),
-    },
-  );
+  return group([blockStart, body, innerTrailingWhitespace(node, args), blockEnd], {
+    id: tagGroupId,
+    shouldBreak:
+      LIQUID_TAGS_THAT_ALWAYS_BREAK.includes(node.name) ||
+      originallyHadLineBreaks(path, options) ||
+      isAttributeNode(node) ||
+      isDeeplyNested(node),
+  });
 }
 
 export function printLiquidRawTag(
@@ -1222,11 +1312,7 @@ export function printLiquidRawTag(
   const shouldNotIndentBody = node.name === 'schema' && !options.indentSchema;
   const shouldPrintAsIs =
     node.isIndentationSensitive ||
-    !hasLineBreakInRange(
-      node.source,
-      node.body.position.start,
-      node.body.position.end,
-    );
+    !hasLineBreakInRange(node.source, node.body.position.start, node.body.position.end);
   const blockStart = isLiquidStatement
     ? [node.name]
     : group([
@@ -1241,24 +1327,10 @@ export function printLiquidRawTag(
       ]);
   const blockEnd = isLiquidStatement
     ? ['end', node.name]
-    : [
-        '{%',
-        node.whitespaceStart,
-        ' ',
-        'end',
-        node.name,
-        ' ',
-        node.whitespaceEnd,
-        '%}',
-      ];
+    : ['{%', node.whitespaceStart, ' ', 'end', node.name, ' ', node.whitespaceEnd, '%}'];
 
   if (shouldPrintAsIs) {
-    body = [
-      node.source.slice(
-        node.blockStartPosition.end,
-        node.blockEndPosition.start,
-      ),
-    ];
+    body = [node.source.slice(node.blockStartPosition.end, node.blockEndPosition.start)];
   } else if (hasEmptyBody) {
     body = [hardline];
   } else if (shouldNotIndentBody) {
@@ -1279,20 +1351,14 @@ function innerLeadingWhitespace(node: LiquidTag | LiquidBranch) {
     }
   }
 
-  if (
-    node.firstChild.hasLeadingWhitespace &&
-    node.firstChild.isLeadingWhitespaceSensitive
-  ) {
+  if (node.firstChild.hasLeadingWhitespace && node.firstChild.isLeadingWhitespaceSensitive) {
     return line;
   }
 
   return softline;
 }
 
-function innerTrailingWhitespace(
-  node: LiquidTag | LiquidBranch,
-  args: LiquidPrinterArgs,
-) {
+function innerTrailingWhitespace(node: LiquidTag | LiquidBranch, args: LiquidPrinterArgs) {
   if (
     (!args.isLiquidStatement && shouldPreserveContent(node)) ||
     node.type === NodeTypes.LiquidBranch ||
@@ -1302,10 +1368,7 @@ function innerTrailingWhitespace(
     return '';
   }
 
-  if (
-    node.lastChild.hasTrailingWhitespace &&
-    node.lastChild.isTrailingWhitespaceSensitive
-  ) {
+  if (node.lastChild.hasTrailingWhitespace && node.lastChild.isTrailingWhitespaceSensitive) {
     return line;
   }
 
@@ -1325,16 +1388,14 @@ function printLiquidDefaultBranch(
   // from the trailingWhitespace of the parent. When this happens, we don't
   // want the branch to print another one so we collapse it.
   // e.g. {% if A %} {% endif %}
-  const shouldCollapseSpace =
-    isEmpty(branch.children) && parentNode.children!.length === 1;
+  const shouldCollapseSpace = isEmpty(branch.children) && parentNode.children!.length === 1;
   if (shouldCollapseSpace) return '';
 
   // When the branch is empty and doesn't have whitespace, we don't want
   // anything so print nothing.
   // e.g. {% if A %}{% endif %}
   // e.g. {% if A %}{% else %}...{% endif %}
-  const isBranchEmptyWithoutSpace =
-    isEmpty(branch.children) && !branch.hasDanglingWhitespace;
+  const isBranchEmptyWithoutSpace = isEmpty(branch.children) && !branch.hasDanglingWhitespace;
   if (isBranchEmptyWithoutSpace) return '';
 
   // If the branch does not break, is empty and had whitespace, we might
@@ -1399,14 +1460,10 @@ export function printLiquidBranch(
   ];
 }
 
-function needsBlockStartLeadingWhitespaceStrippingOnBreak(
-  node: LiquidTag | LiquidBranch,
-): boolean {
+function needsBlockStartLeadingWhitespaceStrippingOnBreak(node: LiquidTag | LiquidBranch): boolean {
   switch (node.type) {
     case NodeTypes.LiquidTag: {
-      return (
-        !isAttributeNode(node) && hasMeaningfulLackOfLeadingWhitespace(node)
-      );
+      return !isAttributeNode(node) && hasMeaningfulLackOfLeadingWhitespace(node);
     }
     case NodeTypes.LiquidBranch: {
       return (
@@ -1426,9 +1483,7 @@ function needsBlockStartTrailingWhitespaceStrippingOnBreak(
   switch (node.type) {
     case NodeTypes.LiquidTag: {
       if (isBranchedTag(node)) {
-        return needsBlockStartLeadingWhitespaceStrippingOnBreak(
-          node.firstChild! as LiquidBranch,
-        );
+        return needsBlockStartLeadingWhitespaceStrippingOnBreak(node.firstChild! as LiquidBranch);
       }
 
       if (!node.children) {
@@ -1484,17 +1539,10 @@ function getSchema(contents: string, options: LiquidParserOptions) {
   }
 }
 
-function getSpaceBetweenLines(
-  prev: LiquidStatement | null,
-  curr: LiquidStatement,
-): Doc {
+function getSpaceBetweenLines(prev: LiquidStatement | null, curr: LiquidStatement): Doc {
   if (!prev) return '';
   const source = curr.source;
-  const whitespaceBetweenNodes = source.slice(
-    prev.position.end,
-    curr.position.start,
-  );
-  const hasMoreThanOneNewLine =
-    (whitespaceBetweenNodes.match(/\n/g) || []).length > 1;
+  const whitespaceBetweenNodes = source.slice(prev.position.end, curr.position.start);
+  const hasMoreThanOneNewLine = (whitespaceBetweenNodes.match(/\n/g) || []).length > 1;
   return hasMoreThanOneNewLine ? hardline : '';
 }

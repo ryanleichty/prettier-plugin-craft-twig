@@ -44,6 +44,26 @@ printWidth: 80
     []
 %}
 
+It should expand array literals before filter chains
+printWidth: 80
+{%
+  set sectionClasses = [ 'Section CardsStickyTextSection', mediaLayout == 'single' ? 'CardsStickyTextSection--single' : 'CardsStickyTextSection--double', macros.getSectionSpacing(spacingTop, spacingBottom), macros.getMediaPosition(mediaPosition), ]
+    |filter
+    |join(' ')
+%}
+
+It should keep short array literals before filter chains on one line
+printWidth: 80
+{% set images = [ primaryImage, secondaryImage ]|filter %}
+
+It should wrap coalescing chains in raw set assignments
+printWidth: 80
+{% set primaryImage = entry.primaryImage.eagerly().one() ??? entry.hyperlink.element.images.eagerly().one() ?? null %}
+
+It should keep short coalescing chains in raw set assignments on one line
+printWidth: 100
+{% set heading = entry.heading ?? entry.hyperlink.element.title ?? null %}
+
 It should indent method chains in raw set assignments
 printWidth: 80
 {%
