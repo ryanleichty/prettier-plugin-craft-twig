@@ -1,10 +1,16 @@
+Unreleased
+==========
+
+* Rename package to `prettier-plugin-craft-twig`
+* Convert formatter direction from Liquid compatibility to Craft CMS 5 / Twig 3 support
+
 2.0.0 / 2026-03-06
 ==================
 
-* Rename `liquidSingleQuote` option to `twigSingleQuote` for consistency with the plugin name [#10](https://github.com/wearedestination/prettier-plugin-twig/pull/10)
-* Make `twigSingleQuote` (formerly `liquidSingleQuote`) work for Twig code [#7](https://github.com/wearedestination/prettier-plugin-twig/pull/7)
-* Fix `elseif` indentation and incorrect removal of expression in invalid else if statement [#8](https://github.com/wearedestination/prettier-plugin-twig/pull/8)
-* Preserve nested object indentation in multi-line set tags [#9](https://github.com/wearedestination/prettier-plugin-twig/pull/9)
+* Rename `liquidSingleQuote` option to `twigSingleQuote` for consistency with the plugin name [#10](https://github.com/wearedestination/prettier-plugin-craft-twig/pull/10)
+* Make `twigSingleQuote` (formerly `liquidSingleQuote`) work for Twig code [#7](https://github.com/wearedestination/prettier-plugin-craft-twig/pull/7)
+* Fix `elseif` indentation and incorrect removal of expression in invalid else if statement [#8](https://github.com/wearedestination/prettier-plugin-craft-twig/pull/8)
+* Preserve nested object indentation in multi-line set tags [#9](https://github.com/wearedestination/prettier-plugin-craft-twig/pull/9)
 
 1.2.2 / 2023-07-18
 ==================

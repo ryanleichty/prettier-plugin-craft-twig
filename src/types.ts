@@ -125,7 +125,6 @@ export type LiquidParserOptions = ParserOptions<LiquidHtmlNode> & {
   singleAttributePerLine: boolean;
   singleLineLinkTags: boolean;
   twigSingleQuote: boolean;
-  liquidSingleQuote?: boolean;
   embeddedSingleQuote: boolean;
   indentSchema: boolean;
 };

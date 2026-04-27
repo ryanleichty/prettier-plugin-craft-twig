@@ -11,10 +11,10 @@ run() {
 
 if [[ $PRETTIER_MAJOR = 3 ]]; then
   prettier='./prettier3'
-  cmd="./node_modules/prettier3/bin/prettier.cjs --plugin ./dist/index.js --parser=liquid-html --ignore-path=.prettierignore"
+  cmd="./node_modules/prettier3/bin/prettier.cjs --plugin ./dist/index.js --parser=craft-twig --ignore-path=.prettierignore"
 else
   prettier='./prettier2'
-  cmd="./node_modules/prettier2/bin-prettier.js --plugin . --parser=liquid-html"
+  cmd="./node_modules/prettier2/bin-prettier.js --plugin . --parser=craft-twig"
 fi
 
 # format with prettier2

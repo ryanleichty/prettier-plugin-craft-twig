@@ -1,8 +1,6 @@
-# Twig Prettier Plugin
+# Craft Twig Prettier Plugin
 
-This is a fork of the excellent [Shopify Liquid Prettier Plugin](https://github.com/Shopify/prettier-plugin-liquid).
-
-As Liquid and Twig are quite similar, we were able to make minimal changes to the original plugin to support Twig.
+Prettier plugin for Craft CMS Twig templates.
 
 [Prettier](https://prettier.io) is an opinionated code formatter. It enforces a consistent style by parsing your code and re-printing it with its own rules that take the maximum line length into account, wrapping code when necessary.
 
@@ -10,17 +8,17 @@ As Liquid and Twig are quite similar, we were able to make minimal changes to th
 
 ```bash
 # with npm
-npm install --save-dev prettier @destination/prettier-plugin-twig
+npm install --save-dev prettier prettier-plugin-craft-twig
 
 # with yarn
-yarn add --dev prettier @destination/prettier-plugin-twig
+yarn add --dev prettier prettier-plugin-craft-twig
 ```
 
 For Prettier version 3 and above, the plugin must also be declared in the [configuration](https://prettier.io/docs/en/configuration.html).
 
 ```
 {
-  "plugins": ["@destination/prettier-plugin-twig"]
+  "plugins": ["prettier-plugin-craft-twig"]
 }
 ```
 

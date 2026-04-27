@@ -1,4 +1,4 @@
-# Contributing to @destination/prettier-plugin-twig
+# Contributing to prettier-plugin-craft-twig
 
 Requirements:
 
@@ -6,7 +6,7 @@ Requirements:
 - Yarn
 
 ```
-git clone git@github.com:wearedestination/prettier-plugin-twig.git
+git clone git@github.com:wearedestination/prettier-plugin-craft-twig.git
 yarn
 yarn test
 ```
@@ -69,7 +69,7 @@ To run from source on another repo or file:
 yarn build
 
 # run prettier on a file or folder
-prettier --plugin . --write path/to/files.liquid
+prettier --plugin . --write path/to/files.twig
 ```
 
 ## Running from source on another code base
@@ -77,12 +77,12 @@ prettier --plugin . --write path/to/files.liquid
 ### Adding new integration tests
 
 - Copy any of the folder in the `test/` directory and rename it to something appropriate.
-- In the `index.liquid` file, type code that should be made prettier
-- In the `fixed.liquid` file, type what you'd expect the plugin to output
+- In the `index.liquid` fixture file, type code that should be made prettier
+- In the `fixed.liquid` fixture file, type what you'd expect the plugin to output
 
 ## How to contribute
 
-1. Fork it ( https://github.com/wearedestination/prettier-plugin-twig/fork )
+1. Fork it ( https://github.com/wearedestination/prettier-plugin-craft-twig/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

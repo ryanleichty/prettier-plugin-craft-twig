@@ -1,10 +1,10 @@
 {
-  "name": "@destination/prettier-plugin-twig",
+  "name": "prettier-plugin-craft-twig",
   "version": "2.0.0",
-  "description": "Prettier Twig/HTML plugin by Destination",
+  "description": "Prettier Craft CMS Twig/HTML plugin",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wearedestination/prettier-plugin-twig.git"
+    "url": "git+https://github.com/wearedestination/prettier-plugin-craft-twig.git"
   },
   "author": "Andy Palmer <andy.palmer@wearedestination.com>",
   "contributors": [
@@ -13,9 +13,9 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "homepage": "https://github.com/wearedestination/prettier-plugin-twig",
+  "homepage": "https://github.com/wearedestination/prettier-plugin-craft-twig",
   "bugs": {
-    "url": "https://github.com/wearedestination/prettier-plugin-twig/issues"
+    "url": "https://github.com/wearedestination/prettier-plugin-craft-twig/issues"
   },
   "files": [
     "grammar/*",
@@ -43,9 +43,9 @@
     "prettier": "scripts/prettier",
     "prettier2": "cross-env PRETTIER_MAJOR=2 scripts/prettier",
     "prettier3": "cross-env PRETTIER_MAJOR=3 scripts/prettier",
-    "test": "mocha '{src,test}/**/*.spec.ts'",
+    "test": "mocha 'test/twig-*/**/*.spec.ts' 'test/utils.spec.ts'",
     "test:3": "cross-env PRETTIER_MAJOR=3 yarn test",
-    "test:idempotence": "cross-env TEST_IDEMPOTENCE=true node_modules/.bin/mocha 'test/**/*.spec.ts'",
+    "test:idempotence": "cross-env TEST_IDEMPOTENCE=true node_modules/.bin/mocha 'test/twig-*/**/*.spec.ts'",
     "test:idempotence:3": "cross-env PRETTIER_MAJOR=3 yarn test:idempotence",
     "type-check": "tsc --noEmit"
   },

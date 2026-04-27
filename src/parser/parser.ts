@@ -5,13 +5,13 @@ export function parse(text: string): LiquidHtmlNode {
   return toLiquidHtmlAST(text);
 }
 
-export const liquidHtmlAstFormat = 'liquid-html-ast';
+export const craftTwigAstFormat = 'craft-twig-ast';
 
-export const liquidHtmlLanguageName = 'liquid-html';
+export const craftTwigLanguageName = 'craft-twig';
 
-export const liquidHtmlParser = {
+export const craftTwigParser = {
   parse,
-  astFormat: liquidHtmlAstFormat,
+  astFormat: craftTwigAstFormat,
   locStart,
   locEnd,
 };
