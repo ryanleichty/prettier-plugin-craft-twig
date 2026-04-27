@@ -1,0 +1,28 @@
+It should indent macro bodies
+{% macro getCollectionDescription(collection, profiles) %}
+  {% if collection.description %}
+    <p>{{ collection.description }}</p>
+  {% endif %}
+{% endmacro %}
+
+It should indent apply bodies
+{% apply spaceless %}
+  <span>{{ title }}</span>
+{% endapply %}
+
+It should indent Craft cache and nav bodies
+{% cache using key 'example' %}
+  {% nav entry in entries %}
+    <a href="{{ entry.url }}">{{ entry.title }}</a>
+  {% endnav %}
+{% endcache %}
+
+It should indent embed and with bodies
+{% embed '_layouts/card' with { title: entry.title } %}
+  {% block content %}
+    {{ entry.summary }}
+  {% endblock %}
+{% endembed %}
+{% with { profile: profiles[0] } %}
+  {{ profile.title }}
+{% endwith %}

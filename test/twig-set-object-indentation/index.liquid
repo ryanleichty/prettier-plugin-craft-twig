@@ -12,3 +12,25 @@ set defaultAttributes = {
 }
 %}
 
+It should preserve nested object indentation in multi-line drops
+{{
+profileThumbnailSvg|attr({
+class: 'MouldingCollection__metaSvg'
+})|raw
+}}
+
+It should honor configured indentation in multi-line drops
+tabWidth: 4
+{{
+profileThumbnailSvg|attr({
+class: 'MouldingCollection__metaSvg'
+})|raw
+}}
+
+It should expand single-line raw object literals when they exceed printWidth
+printWidth: 40
+{{ profileThumbnailSvg|attr({class: 'MouldingCollection__metaSvg'})|raw }}
+
+It should normalize object property spacing in raw object literals
+{{ profileThumbnailSvg|attr({ class:'test' })|raw }}
+

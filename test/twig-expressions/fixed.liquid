@@ -1,0 +1,14 @@
+It should use Twig pipe spacing for parsed filter chains
+{{ title|trim|lower }}
+
+It should wrap parsed filter chains without pipe spaces
+printWidth: 20
+{{
+  title
+    |trim
+    |lower
+    |capitalize
+}}
+
+It should keep raw Craft expressions tolerant
+{{ craft.entries.section('blog').eagerly().one() ??? null }}

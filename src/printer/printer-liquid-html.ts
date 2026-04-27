@@ -478,13 +478,13 @@ function printNode(
       const name = path.call(print, 'expression');
       let filters: Doc = '';
       if (node.filters.length > 0) {
-        filters = [
-          line,
+        filters = indent([
+          softline,
           join(
-            line,
+            softline,
             path.map((p) => print(p), 'filters'),
           ),
-        ];
+        ]);
       }
       return [name, filters];
     }
@@ -508,7 +508,7 @@ function printNode(
         }
       }
 
-      return group(['| ', node.name, ...args]);
+      return group(['|', node.name, ...args]);
     }
 
     case NodeTypes.NamedArgument: {

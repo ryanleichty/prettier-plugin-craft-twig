@@ -16,6 +16,13 @@ import {
   LiquidStatement,
 } from '~/types';
 import { isBranchedTag } from '~/parser/stage-2-ast';
+import {
+  formatTwigObjectProperty,
+  parseTwigExpression,
+  splitTwigFilterChain,
+  splitTwigObjectProperty,
+  splitTwigTopLevelProperties,
+} from '~/parser/twig-expression';
 import { assertNever, getTwigSingleQuote } from '~/utils';
 
 import {
@@ -82,20 +89,155 @@ export function printLiquidDrop(
     getTwigSingleQuote(options),
   );
 
-  // This should probably be better than this but it'll do for now.
   const lines = markupLines(markup);
   if (lines.length > 1) {
     return group([
       '{{',
       whitespaceStart,
-      indent([hardline, join(hardline, lines.map(trim))]),
+      indent([hardline, join(hardline, printRawMarkupLines(lines, options))]),
       hardline,
       whitespaceEnd,
       '}}',
     ]);
   }
 
-  return group(['{{', whitespaceStart, ' ', markup, ' ', whitespaceEnd, '}}']);
+  return group([
+    '{{',
+    whitespaceStart,
+    indent([line, printSingleLineRawMarkup(markup)]),
+    line,
+    whitespaceEnd,
+    '}}',
+  ]);
+}
+
+function printSingleLineRawMarkup(markup: string): Doc {
+  const objectLiteral = getObjectLiteralRange(markup);
+  if (!objectLiteral) return markup;
+
+  const { prefix, body, suffix } = objectLiteral;
+  const properties = splitTwigTopLevelProperties(body);
+  if (!properties) return markup;
+  if (properties.length === 0) return markup;
+
+  return group([
+    prefix.trimEnd(),
+    indent([line, join([',', line], properties.map(formatTwigObjectProperty))]),
+    line,
+    suffix.trimStart(),
+  ]);
+}
+
+function printRawMarkupLines(
+  lines: string[],
+  options: LiquidParserOptions,
+): string[] {
+  let nestingLevel = 0;
+  const indentUnit = options.useTabs ? '\t' : ' '.repeat(options.tabWidth ?? 2);
+
+  return reindent(lines, true).map((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) return '';
+
+    const leadingClosers = countLeadingClosingBrackets(trimmed);
+    const lineLevel =
+      index === 0 ? 0 : Math.max(nestingLevel - leadingClosers, 0);
+
+    nestingLevel = Math.max(nestingLevel + bracketNestingDelta(trimmed), 0);
+
+    const printedLine =
+      lineLevel > 0 ? formatTwigObjectProperty(trimmed) : trimmed;
+
+    return indentUnit.repeat(lineLevel) + printedLine;
+  });
+}
+
+function getObjectLiteralRange(markup: string) {
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+  let objectStart: number | null = null;
+  let nestingLevel = 0;
+
+  for (let i = 0; i < markup.length; i++) {
+    const char = markup[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === '{') {
+      if (objectStart === null) objectStart = i;
+      nestingLevel += 1;
+      continue;
+    }
+
+    if (char === '}') {
+      nestingLevel -= 1;
+      if (objectStart !== null && nestingLevel === 0) {
+        return {
+          prefix: markup.slice(0, objectStart + 1),
+          body: markup.slice(objectStart + 1, i),
+          suffix: markup.slice(i),
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function countLeadingClosingBrackets(line: string): number {
+  const match = line.match(/^[)\]}]+/);
+  return match ? match[0].length : 0;
+}
+
+function bracketNestingDelta(line: string): number {
+  let delta = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (const char of line) {
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      delta += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      delta -= 1;
+    }
+  }
+
+  return Math.min(delta, 1);
 }
 
 function printNamedLiquidBlockStart(
@@ -344,7 +486,7 @@ export function printLiquidBlockStart(
     return group([
       '{#',
       whitespaceStart,
-      node.markup ? ` ${node.markup}` : '',
+      node.markup ? ` ${node.markup.trim()}` : '',
       ' ',
       whitespaceEnd,
       '#}',
@@ -372,12 +514,36 @@ export function printLiquidBlockStart(
   }
 
   if (lines.length > 1) {
+    const printedMarkup = printMultilineRawTagMarkup(lines, options);
+    if (printedMarkup) {
+      return group([
+        '{%',
+        whitespaceStart,
+        indent([line, node.name, ' ', printedMarkup]),
+        line,
+        whitespaceEnd,
+        '%}',
+      ]);
+    }
+
     const reindentedLines = reindent(lines, true);
     return group([
       '{%',
       whitespaceStart,
       indent([hardline, node.name, ' ', join(hardline, reindentedLines)]),
       hardline,
+      whitespaceEnd,
+      '%}',
+    ]);
+  }
+
+  const printedMarkup = printSingleLineRawTagMarkup(transformedMarkup, options);
+  if (printedMarkup) {
+    return group([
+      '{%',
+      whitespaceStart,
+      indent([line, node.name, transformedMarkup ? [' ', printedMarkup] : '']),
+      line,
       whitespaceEnd,
       '%}',
     ]);
@@ -393,6 +559,537 @@ export function printLiquidBlockStart(
     whitespaceEnd,
     '%}',
   ]);
+}
+
+function printMultilineRawTagMarkup(
+  lines: string[],
+  options: LiquidParserOptions,
+): Doc | null {
+  const markup = reindent(lines, true)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(' ');
+
+  return printSingleLineRawTagMarkup(markup, options);
+}
+
+function printSingleLineRawTagMarkup(
+  markup: string,
+  options: LiquidParserOptions,
+): Doc | null {
+  const parsedExpression = parseTwigExpression(markup);
+  if (!parsedExpression) return null;
+
+  const includeMarkup = printRawTwigIncludeMarkup(parsedExpression.source, {
+    shouldBreak: parsedExpression.source.length > options.printWidth,
+  });
+  if (includeMarkup) return includeMarkup;
+
+  const assignment = printRawTwigAssignment(parsedExpression.source);
+  if (assignment) return assignment;
+
+  const filterChain = splitTwigFilterChain(parsedExpression.source);
+  if (!filterChain) return null;
+
+  const [expression, ...filters] = filterChain;
+  return group([
+    expression,
+    indent([
+      softline,
+      join(
+        softline,
+        filters.map((filter) => ['|', printRawTwigFilter(filter)]),
+      ),
+    ]),
+  ]);
+}
+
+function printRawTwigIncludeMarkup(
+  markup: string,
+  { shouldBreak = false } = {},
+): Doc | null {
+  const match = /^([\s\S]+?)\s+with\s+(\{[\s\S]+\})(\s+only)?$/.exec(
+    markup.trim(),
+  );
+  if (!match) return null;
+
+  const variables = printRawTwigObjectLiteral(match[2], { shouldBreak });
+  if (!variables) return null;
+
+  return group([
+    match[1].trim(),
+    indent([line, 'with ', variables, match[3] ? [line, match[3].trim()] : '']),
+  ]);
+}
+
+function printRawTwigAssignment(markup: string): Doc | null {
+  const assignment = splitTopLevelAssignment(markup);
+  if (!assignment) return null;
+
+  const ternaryValue = printRawTwigTernary(assignment.right);
+  if (ternaryValue) {
+    return group([assignment.left, ' =', indent([line, ternaryValue])]);
+  }
+
+  const methodChainValue = printRawTwigMethodChainExpression(assignment.right);
+  if (methodChainValue) {
+    return group([assignment.left, ' = ', methodChainValue]);
+  }
+
+  return null;
+}
+
+function splitTopLevelAssignment(source: string) {
+  const index = findTopLevelAssignmentOperator(source);
+  if (index === null) return null;
+
+  return {
+    left: source.slice(0, index).trim(),
+    right: source.slice(index + 1).trim(),
+  };
+}
+
+function printRawTwigFilter(filter: string): Doc {
+  const call = parseRawTwigFilterCall(filter);
+  if (!call) return filter;
+
+  const args = printRawTwigFilterArguments(call.args);
+  if (!args) return filter;
+
+  return group([call.name, '(', args, softline, ')']);
+}
+
+function parseRawTwigFilterCall(filter: string) {
+  const match = /^([A-Za-z_][\w-]*)\(([\s\S]*)\)$/.exec(filter.trim());
+  if (!match) return null;
+
+  return {
+    name: match[1],
+    args: match[2].trim(),
+  };
+}
+
+function printRawTwigFilterArguments(args: string): Doc | null {
+  const arrow = splitTopLevelOperator(args, '=>');
+  if (!arrow) return null;
+
+  const body = printRawTwigExpression(arrow.right);
+  if (!body) return null;
+
+  return group([arrow.left, ' =>', indent([line, body])]);
+}
+
+function printRawTwigExpression(expression: string): Doc | null {
+  return (
+    printRawTwigTernary(expression) ??
+    printRawTwigMethodChainExpression(expression) ??
+    printRawTwigCallExpression(expression) ??
+    printRawTwigFilterChainExpression(expression) ??
+    printRawTwigObjectLiteral(expression)
+  );
+}
+
+function printRawTwigFilterChainExpression(expression: string): Doc | null {
+  const filterChain = splitTwigFilterChain(expression);
+  if (!filterChain) return null;
+
+  const [baseExpression, ...filters] = filterChain;
+  return group([
+    baseExpression,
+    indent([
+      softline,
+      join(
+        softline,
+        filters.map((filter) => ['|', printRawTwigFilter(filter)]),
+      ),
+    ]),
+  ]);
+}
+
+function printRawTwigMethodChainExpression(expression: string): Doc | null {
+  const chain = splitRawTwigMethodChain(expression);
+  if (!chain) return null;
+
+  return group([chain.base, indent([softline, join(softline, chain.calls)])]);
+}
+
+function printRawTwigCallExpression(expression: string): Doc | null {
+  const call = parseRawTwigFilterCall(expression);
+  if (!call) return null;
+
+  const args = splitTwigTopLevelProperties(call.args);
+  if (!args) return null;
+
+  return group([
+    call.name,
+    '(',
+    indent([line, join([',', line], args.map(printRawTwigArgument))]),
+    line,
+    ')',
+  ]);
+}
+
+function printRawTwigArgument(argument: string): Doc {
+  return printRawTwigExpression(argument) ?? argument.trim();
+}
+
+function printRawTwigObjectLiteral(
+  expression: string,
+  { shouldBreak = false } = {},
+): Doc | null {
+  const trimmed = expression.trim();
+  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+
+  const properties = splitTwigTopLevelProperties(trimmed.slice(1, -1));
+  if (!properties) return null;
+
+  return group(
+    [
+      '{',
+      indent([
+        line,
+        join(
+          [',', line],
+          properties.map((property) => printRawTwigObjectProperty(property)),
+        ),
+      ]),
+      line,
+      '}',
+    ],
+    { shouldBreak },
+  );
+}
+
+function printRawTwigObjectProperty(property: string): Doc {
+  const splitProperty = splitTwigObjectProperty(property);
+  if (!splitProperty) return property.trim();
+
+  const ternaryValue = printRawTwigTernary(splitProperty.value);
+  if (ternaryValue) {
+    return [splitProperty.key, ':', indent([line, ternaryValue])];
+  }
+
+  return [
+    splitProperty.key,
+    ': ',
+    printRawTwigExpression(splitProperty.value) ?? splitProperty.value,
+  ];
+}
+
+function printRawTwigTernary(expression: string): Doc | null {
+  const chain = collectRawTwigTernaryChain(expression);
+  if (!chain) return null;
+
+  const [firstCase, ...restCases] = chain.cases;
+  const restLines: Doc[] = [
+    ...restCases.map((ternaryCase) => [
+      ternaryCase.condition,
+      ' ? ',
+      printRawTwigNonTernaryExpression(ternaryCase.consequent) ??
+        ternaryCase.consequent,
+      ' :',
+    ]),
+    printRawTwigNonTernaryExpression(chain.fallback) ?? chain.fallback,
+  ];
+
+  return group([
+    firstCase.condition,
+    ' ? ',
+    printRawTwigNonTernaryExpression(firstCase.consequent) ??
+      firstCase.consequent,
+    ' :',
+    line,
+    join(line, restLines),
+  ]);
+}
+
+function printRawTwigNonTernaryExpression(expression: string): Doc | null {
+  return (
+    printRawTwigCallExpression(expression) ??
+    printRawTwigFilterChainExpression(expression) ??
+    printRawTwigObjectLiteral(expression)
+  );
+}
+
+function collectRawTwigTernaryChain(expression: string) {
+  const cases: { condition: string; consequent: string }[] = [];
+  let current = expression;
+
+  while (true) {
+    const ternary = splitTopLevelTernary(current);
+    if (!ternary) {
+      if (cases.length === 0) return null;
+      return {
+        cases,
+        fallback: current.trim(),
+      };
+    }
+
+    cases.push({
+      condition: ternary.condition,
+      consequent: ternary.consequent,
+    });
+    current = ternary.alternate;
+  }
+}
+
+function splitTopLevelOperator(source: string, operator: string) {
+  const index = findTopLevelOperator(source, operator);
+  if (index === null) return null;
+
+  return {
+    left: source.slice(0, index).trim(),
+    right: source.slice(index + operator.length).trim(),
+  };
+}
+
+function splitTopLevelTernary(source: string) {
+  const questionIndex = findTopLevelOperator(source, '?');
+  if (questionIndex === null) return null;
+
+  const colonIndex = findMatchingTernaryColon(source, questionIndex + 1);
+  if (colonIndex === null) return null;
+
+  return {
+    condition: source.slice(0, questionIndex).trim(),
+    consequent: source.slice(questionIndex + 1, colonIndex).trim(),
+    alternate: source.slice(colonIndex + 1).trim(),
+  };
+}
+
+function findMatchingTernaryColon(
+  source: string,
+  start: number,
+): number | null {
+  let ternaryDepth = 0;
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (let i = start; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      nestingLevel += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      nestingLevel -= 1;
+    } else if (nestingLevel === 0 && char === '?') {
+      ternaryDepth += 1;
+    } else if (nestingLevel === 0 && char === ':') {
+      if (ternaryDepth === 0) return i;
+      ternaryDepth -= 1;
+    }
+  }
+
+  return null;
+}
+
+function findTopLevelAssignmentOperator(source: string): number | null {
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      nestingLevel += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      nestingLevel -= 1;
+    } else if (
+      nestingLevel === 0 &&
+      char === '=' &&
+      !['=', '!', '<', '>'].includes(source[i - 1]) &&
+      source[i + 1] !== '=' &&
+      source[i + 1] !== '>'
+    ) {
+      return i;
+    }
+  }
+
+  return null;
+}
+
+function splitRawTwigMethodChain(source: string) {
+  if (splitTwigFilterChain(source) || splitTopLevelOperator(source, '=>')) {
+    return null;
+  }
+
+  const calls: string[] = [];
+  let firstCallStart: number | null = null;
+  let startOfPreviousCallEnd = 0;
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      nestingLevel += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      nestingLevel -= 1;
+    } else if (
+      nestingLevel === 0 &&
+      char === '.' &&
+      /^[A-Za-z_]/.test(source[i + 1] ?? '')
+    ) {
+      const callEnd = readRawTwigMethodCall(source, i);
+      if (callEnd === null) continue;
+
+      if (firstCallStart === null) {
+        firstCallStart = i;
+      } else if (source.slice(startOfPreviousCallEnd, i).trim() !== '') {
+        return null;
+      }
+
+      calls.push(source.slice(i, callEnd).trim());
+      startOfPreviousCallEnd = callEnd;
+      i = callEnd - 1;
+    }
+  }
+
+  if (firstCallStart === null || calls.length === 0) return null;
+  if (source.slice(startOfPreviousCallEnd).trim() !== '') return null;
+
+  const base = source.slice(0, firstCallStart).trim();
+  if (!base) return null;
+
+  return {
+    base,
+    calls,
+  };
+}
+
+function readRawTwigMethodCall(source: string, start: number): number | null {
+  const match = source.slice(start).match(/^\.[A-Za-z_][\w-]*/);
+  if (!match) return null;
+
+  let i = start + match[0].length;
+  while (/\s/.test(source[i] ?? '')) i += 1;
+  if (source[i] !== '(') return null;
+
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(') {
+      nestingLevel += 1;
+    } else if (char === ')') {
+      nestingLevel -= 1;
+      if (nestingLevel === 0) return i + 1;
+    }
+  }
+
+  return null;
+}
+
+function findTopLevelOperator(source: string, operator: string): number | null {
+  let nestingLevel = 0;
+  let quote: '"' | "'" | null = null;
+  let isEscaped = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = quote !== null;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '(' || char === '[' || char === '{') {
+      nestingLevel += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      nestingLevel -= 1;
+    } else if (nestingLevel === 0 && source.startsWith(operator, i)) {
+      return i;
+    }
+  }
+
+  return null;
 }
 
 export function printLiquidBlockEnd(

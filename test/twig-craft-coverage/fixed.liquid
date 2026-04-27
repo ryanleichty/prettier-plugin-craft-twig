@@ -1,0 +1,35 @@
+It should tolerate Craft functions and globals
+{{ craft.entries.section('blog').with(['heroImage']).eagerly().one() ??? null }}
+{{ tag('div', { class: 'card', data: { id: entry.id } }, entry.title) }}
+{{ hiddenInput('action', 'users/save-user') }}
+
+It should tolerate Craft tests
+{% if entry is instance of('craft\\elements\\Entry') and value is numeric %}
+  {{ value|number }}
+{% endif %}
+
+It should format standalone Craft tags
+{% do craft.app.elements.saveElement(entry) %}
+{% header 'Cache-Control: no-store' %}
+{% requireLogin %}
+{% redirect siteUrl %}
+
+It should expand long include with objects
+printWidth: 80
+{%
+  include '_components/product-card'
+    with {
+      entry: item,
+      sizes,
+      loading,
+      headingTag: 'h3'
+    }
+    only
+%}
+
+It should normalize single-line Twig comment spacing
+{# Only execute the auto query if an entry type is selected or the content type is `idea`. #}
+
+It should preserve unknown custom extension tags
+{% customTag foo|bar %}
+{{ foo || bar }}

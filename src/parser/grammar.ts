@@ -48,8 +48,13 @@ export const VOID_ELEMENTS = (
 ) as string[];
 
 export const TAGS_WITHOUT_MARKUP = [
+  'css',
+  'html',
+  'js',
+  'script',
   'style',
   'schema',
+  'verbatim',
   'javascript',
   'break',
   'continue',

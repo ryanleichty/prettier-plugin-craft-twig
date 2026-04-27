@@ -190,7 +190,12 @@ Liquid <: Helpers {
   liquidInlineComment = "{#" "-"? space? twigTagMarkup "-"? "#}"
 
   liquidRawTag =
+    | liquidRawTagImpl<"css">
+    | liquidRawTagImpl<"html">
+    | liquidRawTagImpl<"js">
     | liquidRawTagImpl<"raw">
+    | liquidRawTagImpl<"script">
+    | liquidRawTagImpl<"verbatim">
     | liquidRawTagImpl<"javascript">
     | liquidRawTagImpl<"schema">
     | liquidRawTagImpl<"stylesheet">
@@ -275,18 +280,30 @@ Liquid <: Helpers {
     letter (alnum | "_")*
 
   blockName =
-    // Shopify blocks
-    ( "form"
-    | "paginate"
-    // Base blocks
-    | "capture"
-    | "for"
-    | "ifchanged"
-    | "if"
-    | "switch"
-    | "unless"
-    | "tablerow"
+    ( "apply"
+    | "autoescape"
     | "block"
+    | "cache"
+    | "capture"
+    | "embed"
+    | "for"
+    | "form"
+    | "html"
+    | "if"
+    | "ifchanged"
+    | "js"
+    | "macro"
+    | "namespace"
+    | "nav"
+    | "paginate"
+    | "sandbox"
+    | "script"
+    | "switch"
+    | "tag"
+    | "tablerow"
+    | "unless"
+    | "verbatim"
+    | "with"
     ) endOfIdentifier
 }
 
