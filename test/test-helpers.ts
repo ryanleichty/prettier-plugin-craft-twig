@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { expect, it } from 'vitest';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as prettier from 'prettier';
@@ -70,7 +70,7 @@ export function assertFormattedEqualsFixed(
         if ((e as any).stack as any) {
           const fixedUrl = path.join(dirname, 'fixed.liquid');
           const inputUrl = path.join(dirname, 'index.liquid');
-          const testUrl = path.join(dirname, 'index.spec.ts');
+          const testUrl = path.join(dirname, 'index.test.ts');
           const fixedOffset = lineOffset(expectedResults, expected);
           const fixedLoc = diffLoc(expected, actual, fixedOffset).join(':');
           const inputLine = lineOffset(source, src) + 1;

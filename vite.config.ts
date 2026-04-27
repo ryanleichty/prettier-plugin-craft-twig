@@ -1,0 +1,42 @@
+/// <reference types="vitest/config" />
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+
+const isProduction = process.env.NODE_ENV === 'production';
+const prettierPackage = process.env.PRETTIER_MAJOR === '3' ? 'prettier3' : 'prettier2';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      prettier: resolve(process.cwd(), 'node_modules', prettierPackage),
+      src: resolve(process.cwd(), 'src'),
+      '~': resolve(process.cwd(), 'src'),
+    },
+  },
+  build: {
+    emptyOutDir: false,
+    lib: {
+      entry: 'dist/index.js',
+      formats: ['umd'],
+      fileName: () => 'standalone.js',
+      name: 'prettierPluginCraftTwig',
+    },
+    minify: isProduction,
+    outDir: '.vite-standalone',
+    rollupOptions: {
+      external: ['prettier'],
+      output: {
+        exports: 'named',
+        globals: {
+          prettier: 'prettier',
+        },
+      },
+    },
+    sourcemap: !isProduction ? 'inline' : false,
+  },
+  test: {
+    globals: true,
+    include: ['test/twig-*/**/*.test.ts', 'test/utils.test.ts'],
+    setupFiles: ['test/vitest-setup.ts'],
+  },
+});

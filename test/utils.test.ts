@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { expect } from 'vitest';
 import { getTwigSingleQuote } from 'src/utils';
 import { transformStringQuotes } from 'src/printer/utils/string';
 

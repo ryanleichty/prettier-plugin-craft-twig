@@ -108,7 +108,7 @@ export function printLiquidDrop(
 }
 
 function printSingleLineRawMarkup(markup: string): Doc {
-  const expression = printRawTwigExpression(markup);
+  const expression = printRawTwigDropExpression(markup);
   if (expression) return expression;
 
   const objectLiteral = getObjectLiteralRange(markup);
@@ -125,6 +125,20 @@ function printSingleLineRawMarkup(markup: string): Doc {
     line,
     suffix.trimStart(),
   ]);
+}
+
+function printRawTwigDropExpression(expression: string): Doc | null {
+  return (
+    printRawTwigElvisExpression(expression) ??
+    printRawTwigTernary(expression) ??
+    printRawTwigCoalescingChain(expression) ??
+    printRawTwigParenthesizedExpression(expression) ??
+    printRawTwigMethodChainExpression(expression) ??
+    printRawTwigCallExpression(expression) ??
+    printRawTwigFilterChainExpression(expression, { indentFilters: false }) ??
+    printRawTwigArrayLiteral(expression) ??
+    printRawTwigObjectLiteral(expression)
+  );
 }
 
 function printRawMarkupLines(lines: string[], options: LiquidParserOptions): string[] {
@@ -744,20 +758,25 @@ function printRawTwigNonParenthesizedExpression(expression: string): Doc | null 
   );
 }
 
-function printRawTwigFilterChainExpression(expression: string): Doc | null {
+function printRawTwigFilterChainExpression(
+  expression: string,
+  { indentFilters = true } = {},
+): Doc | null {
   const filterChain = splitTwigFilterChain(expression);
   if (!filterChain) return null;
 
   const [baseExpression, ...filters] = filterChain;
+  const printedFilters = [
+    softline,
+    join(
+      softline,
+      filters.map((filter) => ['|', printRawTwigFilter(filter)]),
+    ),
+  ];
+
   return group([
     printRawTwigNonTernaryExpression(baseExpression) ?? baseExpression,
-    indent([
-      softline,
-      join(
-        softline,
-        filters.map((filter) => ['|', printRawTwigFilter(filter)]),
-      ),
-    ]),
+    indentFilters ? indent(printedFilters) : printedFilters,
   ]);
 }
 
