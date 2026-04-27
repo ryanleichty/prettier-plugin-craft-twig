@@ -27,8 +27,6 @@ export function dropLast<T>(n: number, xs: readonly T[]) {
   return result;
 }
 
-export function getTwigSingleQuote(options: {
-  twigSingleQuote: boolean;
-}): boolean {
+export function getTwigSingleQuote(options: { twigSingleQuote: boolean }): boolean {
   return options.twigSingleQuote;
 }

@@ -32,7 +32,7 @@ jobs:
 
       - name: Build
         run: |
-          yarn install --frozen-lockfile --ignore-engines
+          yarn install --frozen-lockfile
           yarn build
 
       - name: Publish

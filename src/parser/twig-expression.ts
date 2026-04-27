@@ -73,9 +73,7 @@ export function parseTwigExpression(source: string): TwigExpressionNode | null {
   };
 }
 
-export function tokenizeTwigExpression(
-  source: string,
-): TwigExpressionToken[] | null {
+export function tokenizeTwigExpression(source: string): TwigExpressionToken[] | null {
   const tokens: TwigExpressionToken[] = [];
   let i = 0;
 
@@ -113,9 +111,7 @@ export function tokenizeTwigExpression(
       continue;
     }
 
-    const operator = SYMBOL_OPERATORS.find((candidate) =>
-      source.startsWith(candidate, i),
-    );
+    const operator = SYMBOL_OPERATORS.find((candidate) => source.startsWith(candidate, i));
     if (operator) {
       tokens.push({ type: 'operator', value: operator });
       i += operator.length;
@@ -141,8 +137,7 @@ export function splitTwigFilterChain(source: string): string[] | null {
 
 export function splitTwigTopLevelProperties(source: string): string[] | null {
   return (
-    splitTopLevel(source, ',', { allowTrailingSeparator: true }) ??
-    [source.trim()].filter(Boolean)
+    splitTopLevel(source, ',', { allowTrailingSeparator: true }) ?? [source.trim()].filter(Boolean)
   );
 }
 

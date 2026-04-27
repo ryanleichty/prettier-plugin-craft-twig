@@ -10,13 +10,9 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
-        node-version: [22.x, 24.x]
-        prettier-major: [2, 3]
+        node-version: [24.x]
 
-    name: OS ${{ matrix.os }} / NodeJS ${{ matrix.node-version }} / Prettier ${{ matrix.prettier-major }}
-
-    env:
-      PRETTIER_MAJOR: ${{ matrix.prettier-major }}
+    name: OS ${{ matrix.os }} / NodeJS ${{ matrix.node-version }}
 
     steps:
       - uses: actions/checkout@v6
@@ -28,7 +24,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install the packages
-        run: yarn install --frozen-lockfile --ignore-engines
+        run: yarn install --frozen-lockfile
 
       - name: Build the code
         run: yarn build

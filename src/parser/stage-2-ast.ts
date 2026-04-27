@@ -262,10 +262,14 @@ export interface TwigTagTablerow extends TwigTagNode<NamedTags.tablerow, ForMark
 
 export interface TwigTagIf extends TwigTagConditional<NamedTags.if> {}
 export interface TwigTagUnless extends TwigTagConditional<NamedTags.unless> {}
-export interface TwigBranchElseif
-  extends TwigBranchNode<NamedTags.elseif, TwigConditionalExpression> {}
-export interface TwigBranchElsif
-  extends TwigBranchNode<NamedTags.elsif, TwigConditionalExpression> {}
+export interface TwigBranchElseif extends TwigBranchNode<
+  NamedTags.elseif,
+  TwigConditionalExpression
+> {}
+export interface TwigBranchElsif extends TwigBranchNode<
+  NamedTags.elsif,
+  TwigConditionalExpression
+> {}
 export interface TwigTagConditional<Name> extends TwigTagNode<Name, TwigConditionalExpression> {}
 
 export type TwigConditionalExpression = TwigLogicalExpression | TwigComparison | TwigExpression;

@@ -1,11 +1,23 @@
 import { Doc } from 'prettier';
-import type { AstPath as AstPath2 } from 'prettier';
-import type { AstPath as AstPath3, ParserOptions as ParserOptions3 } from 'prettier3';
+import type { ParserOptions } from 'prettier';
 import * as AST from '~/parser/stage-2-ast';
 
-export type CommonKeys<T1, T2> = Extract<keyof T1, keyof T2>;
-export type AstPath<T = any> = Pick<AstPath2<T>, CommonKeys<AstPath2<T>, AstPath3<T>>>;
-export type ParserOptions<T = any> = ParserOptions3<T>;
+export type AstPath<T = any> = {
+  node: T;
+  getValue(): T;
+  getName(): string | number | null;
+  getParentNode(count?: number): any;
+  call(callback: (path: AstPath<any>) => any, ...properties: any[]): any;
+  each(
+    callback: (path: AstPath<any>, index: number, value: any) => void,
+    ...properties: any[]
+  ): void;
+  map(
+    callback: (path: AstPath<any>, index: number, value: any) => any,
+    ...properties: any[]
+  ): any[];
+};
+export type { ParserOptions };
 
 export interface Position {
   start: number;

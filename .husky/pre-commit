@@ -1,15 +1,12 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
-cleanup() {
-  rm node_modules/prettier
-}
+files=$(git diff --cached --name-only --diff-filter=ACMR -- 'src/**/*.ts' 'test/**/*.ts')
 
-# format with prettier2
-ln -s ./prettier2 node_modules/prettier
+if [ -z "$files" ]; then
+  exit 0
+fi
 
-# cleanup when done
-trap cleanup EXIT
-
-# pretty-quick on code base
-pretty-quick --staged --pattern 'src/**/*.ts'
+echo "$files" | while IFS= read -r file; do
+  ./node_modules/.bin/prettier --write --ignore-unknown "$file"
+  git add "$file"
+done

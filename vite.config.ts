@@ -3,12 +3,10 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 const isProduction = process.env.NODE_ENV === 'production';
-const prettierPackage = process.env.PRETTIER_MAJOR === '3' ? 'prettier3' : 'prettier2';
 
 export default defineConfig({
   resolve: {
     alias: {
-      prettier: resolve(process.cwd(), 'node_modules', prettierPackage),
       src: resolve(process.cwd(), 'src'),
       '~': resolve(process.cwd(), 'src'),
     },

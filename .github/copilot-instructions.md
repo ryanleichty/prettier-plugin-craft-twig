@@ -12,4 +12,4 @@ You must also use `yarn` for running scripts defined in `package.json`. For exam
 yarn test
 ```
 
-When testing changes in the CLI, use the `prettier2` and `prettier3` package.json scripts instead of using prettier directly.
+When testing changes in the CLI, use the `prettier` package.json script instead of invoking the plugin manually.

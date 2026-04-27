@@ -717,7 +717,7 @@ function printRawTwigCoalescingChain(expression: string): Doc | null {
               ' ',
               chain[index + 1].operator!,
             ]
-          : printRawTwigNonCoalescingExpression(part.expression) ?? part.expression,
+          : (printRawTwigNonCoalescingExpression(part.expression) ?? part.expression),
       ),
     ),
   );

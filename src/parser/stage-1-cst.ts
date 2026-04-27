@@ -123,12 +123,10 @@ export interface ConcreteHtmlRawTag extends ConcreteHtmlNodeBase<ConcreteNodeTyp
   blockEndLocStart: number;
   blockEndLocEnd: number;
 }
-export interface ConcreteHtmlVoidElement
-  extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlVoidElement> {
+export interface ConcreteHtmlVoidElement extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlVoidElement> {
   name: string;
 }
-export interface ConcreteHtmlSelfClosingElement
-  extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlSelfClosingElement> {
+export interface ConcreteHtmlSelfClosingElement extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlSelfClosingElement> {
   name: (ConcreteTextNode | ConcreteTwigDrop)[];
 }
 export interface ConcreteHtmlTagOpen extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlTagOpen> {
@@ -150,12 +148,9 @@ export type ConcreteAttributeNode =
   | ConcreteAttrUnquoted
   | ConcreteAttrEmpty;
 
-export interface ConcreteAttrSingleQuoted
-  extends ConcreteAttributeNodeBase<ConcreteNodeTypes.AttrSingleQuoted> {}
-export interface ConcreteAttrDoubleQuoted
-  extends ConcreteAttributeNodeBase<ConcreteNodeTypes.AttrDoubleQuoted> {}
-export interface ConcreteAttrUnquoted
-  extends ConcreteAttributeNodeBase<ConcreteNodeTypes.AttrUnquoted> {}
+export interface ConcreteAttrSingleQuoted extends ConcreteAttributeNodeBase<ConcreteNodeTypes.AttrSingleQuoted> {}
+export interface ConcreteAttrDoubleQuoted extends ConcreteAttributeNodeBase<ConcreteNodeTypes.AttrDoubleQuoted> {}
+export interface ConcreteAttrUnquoted extends ConcreteAttributeNodeBase<ConcreteNodeTypes.AttrUnquoted> {}
 export interface ConcreteAttrEmpty extends ConcreteBasicNode<ConcreteNodeTypes.AttrEmpty> {
   name: (ConcreteTwigDrop | ConcreteTextNode)[];
 }
@@ -196,32 +191,50 @@ export type ConcreteTwigTagOpenNamed =
   | ConcreteTwigTagOpenSwitch
   | ConcreteTwigTagOpenTablerow;
 
-export interface ConcreteTwigTagOpenNode<Name, Markup>
-  extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTagOpen> {
+export interface ConcreteTwigTagOpenNode<
+  Name,
+  Markup,
+> extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTagOpen> {
   name: Name;
   markup: Markup;
 }
 
 export interface ConcreteTwigTagOpenBaseCase extends ConcreteTwigTagOpenNode<string, string> {}
 
-export interface ConcreteTwigTagOpenCapture
-  extends ConcreteTwigTagOpenNode<NamedTags.capture, ConcreteTwigVariableLookup> {}
-export interface ConcreteTwigTagOpenSet
-  extends ConcreteTwigTagOpenNode<NamedTags.set, ConcreteTwigVariableLookup> {}
+export interface ConcreteTwigTagOpenCapture extends ConcreteTwigTagOpenNode<
+  NamedTags.capture,
+  ConcreteTwigVariableLookup
+> {}
+export interface ConcreteTwigTagOpenSet extends ConcreteTwigTagOpenNode<
+  NamedTags.set,
+  ConcreteTwigVariableLookup
+> {}
 
-export interface ConcreteTwigTagOpenSwitch
-  extends ConcreteTwigTagOpenNode<NamedTags.switch, ConcreteTwigExpression> {}
-export interface ConcreteTwigTagCase
-  extends ConcreteTwigTagNode<NamedTags.case, ConcreteTwigExpression> {}
+export interface ConcreteTwigTagOpenSwitch extends ConcreteTwigTagOpenNode<
+  NamedTags.switch,
+  ConcreteTwigExpression
+> {}
+export interface ConcreteTwigTagCase extends ConcreteTwigTagNode<
+  NamedTags.case,
+  ConcreteTwigExpression
+> {}
 
-export interface ConcreteTwigTagOpenIf
-  extends ConcreteTwigTagOpenNode<NamedTags.if, ConcreteTwigCondition[]> {}
-export interface ConcreteTwigTagOpenUnless
-  extends ConcreteTwigTagOpenNode<NamedTags.unless, ConcreteTwigCondition[]> {}
-export interface ConcreteTwigTagElseif
-  extends ConcreteTwigTagNode<NamedTags.elseif, ConcreteTwigCondition[]> {}
-export interface ConcreteTwigTagElsif
-  extends ConcreteTwigTagNode<NamedTags.elsif, ConcreteTwigCondition[]> {}
+export interface ConcreteTwigTagOpenIf extends ConcreteTwigTagOpenNode<
+  NamedTags.if,
+  ConcreteTwigCondition[]
+> {}
+export interface ConcreteTwigTagOpenUnless extends ConcreteTwigTagOpenNode<
+  NamedTags.unless,
+  ConcreteTwigCondition[]
+> {}
+export interface ConcreteTwigTagElseif extends ConcreteTwigTagNode<
+  NamedTags.elseif,
+  ConcreteTwigCondition[]
+> {}
+export interface ConcreteTwigTagElsif extends ConcreteTwigTagNode<
+  NamedTags.elsif,
+  ConcreteTwigCondition[]
+> {}
 
 export interface ConcreteTwigCondition extends ConcreteBasicNode<ConcreteNodeTypes.Condition> {
   relation: 'and' | 'or' | null;
@@ -234,11 +247,15 @@ export interface ConcreteTwigComparison extends ConcreteBasicNode<ConcreteNodeTy
   right: ConcreteTwigExpression;
 }
 
-export interface ConcreteTwigTagOpenForm
-  extends ConcreteTwigTagOpenNode<NamedTags.form, ConcreteTwigArgument[]> {}
+export interface ConcreteTwigTagOpenForm extends ConcreteTwigTagOpenNode<
+  NamedTags.form,
+  ConcreteTwigArgument[]
+> {}
 
-export interface ConcreteTwigTagOpenFor
-  extends ConcreteTwigTagOpenNode<NamedTags.for, ConcreteTwigTagForMarkup> {}
+export interface ConcreteTwigTagOpenFor extends ConcreteTwigTagOpenNode<
+  NamedTags.for,
+  ConcreteTwigTagForMarkup
+> {}
 export interface ConcreteTwigTagForMarkup extends ConcreteBasicNode<ConcreteNodeTypes.ForMarkup> {
   variableName: string;
   collection: ConcreteTwigExpression;
@@ -246,21 +263,23 @@ export interface ConcreteTwigTagForMarkup extends ConcreteBasicNode<ConcreteNode
   args: ConcreteTwigNamedArgument[];
 }
 
-export interface ConcreteTwigTagOpenTablerow
-  extends ConcreteTwigTagOpenNode<NamedTags.tablerow, ConcreteTwigTagForMarkup> {}
+export interface ConcreteTwigTagOpenTablerow extends ConcreteTwigTagOpenNode<
+  NamedTags.tablerow,
+  ConcreteTwigTagForMarkup
+> {}
 
-export interface ConcreteTwigTagOpenPaginate
-  extends ConcreteTwigTagOpenNode<NamedTags.paginate, ConcretePaginateMarkup> {}
+export interface ConcreteTwigTagOpenPaginate extends ConcreteTwigTagOpenNode<
+  NamedTags.paginate,
+  ConcretePaginateMarkup
+> {}
 
-export interface ConcretePaginateMarkup
-  extends ConcreteBasicNode<ConcreteNodeTypes.PaginateMarkup> {
+export interface ConcretePaginateMarkup extends ConcreteBasicNode<ConcreteNodeTypes.PaginateMarkup> {
   collection: ConcreteTwigExpression;
   pageSize: ConcreteTwigExpression;
   args: ConcreteTwigNamedArgument[] | null;
 }
 
-export interface ConcreteTwigTagClose
-  extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTagClose> {
+export interface ConcreteTwigTagClose extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTagClose> {
   name: string;
 }
 
@@ -281,65 +300,85 @@ export type ConcreteTwigTagNamed =
   | ConcreteTwigTagSection
   | ConcreteTwigTagSections;
 
-export interface ConcreteTwigTagNode<Name, Markup>
-  extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTag> {
+export interface ConcreteTwigTagNode<
+  Name,
+  Markup,
+> extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTag> {
   markup: Markup;
   name: Name;
 }
 
 export interface ConcreteTwigTagBaseCase extends ConcreteTwigTagNode<string, string> {}
-export interface ConcreteTwigTagEcho
-  extends ConcreteTwigTagNode<NamedTags.echo, ConcreteTwigVariable> {}
-export interface ConcreteTwigTagIncrement
-  extends ConcreteTwigTagNode<NamedTags.increment, ConcreteTwigVariableLookup> {}
-export interface ConcreteTwigTagDecrement
-  extends ConcreteTwigTagNode<NamedTags.decrement, ConcreteTwigVariableLookup> {}
-export interface ConcreteTwigTagSection
-  extends ConcreteTwigTagNode<NamedTags.section, ConcreteStringLiteral> {}
-export interface ConcreteTwigTagSections
-  extends ConcreteTwigTagNode<NamedTags.sections, ConcreteStringLiteral> {}
-export interface ConcreteTwigTagLayout
-  extends ConcreteTwigTagNode<NamedTags.layout, ConcreteTwigExpression> {}
+export interface ConcreteTwigTagEcho extends ConcreteTwigTagNode<
+  NamedTags.echo,
+  ConcreteTwigVariable
+> {}
+export interface ConcreteTwigTagIncrement extends ConcreteTwigTagNode<
+  NamedTags.increment,
+  ConcreteTwigVariableLookup
+> {}
+export interface ConcreteTwigTagDecrement extends ConcreteTwigTagNode<
+  NamedTags.decrement,
+  ConcreteTwigVariableLookup
+> {}
+export interface ConcreteTwigTagSection extends ConcreteTwigTagNode<
+  NamedTags.section,
+  ConcreteStringLiteral
+> {}
+export interface ConcreteTwigTagSections extends ConcreteTwigTagNode<
+  NamedTags.sections,
+  ConcreteStringLiteral
+> {}
+export interface ConcreteTwigTagLayout extends ConcreteTwigTagNode<
+  NamedTags.layout,
+  ConcreteTwigExpression
+> {}
 
-export interface ConcreteTwigTagTwig
-  extends ConcreteTwigTagNode<NamedTags.twig, ConcreteTwigTwigTagNode[]> {}
+export interface ConcreteTwigTagTwig extends ConcreteTwigTagNode<
+  NamedTags.twig,
+  ConcreteTwigTwigTagNode[]
+> {}
 export type ConcreteTwigTwigTagNode =
   | ConcreteTwigTagOpen
   | ConcreteTwigTagClose
   | ConcreteTwigTag
   | ConcreteTwigRawTag;
 
-export interface ConcreteTwigTagAssign
-  extends ConcreteTwigTagNode<NamedTags.assign, ConcreteTwigTagAssignMarkup> {}
-export interface ConcreteTwigTagAssignMarkup
-  extends ConcreteBasicNode<ConcreteNodeTypes.AssignMarkup> {
+export interface ConcreteTwigTagAssign extends ConcreteTwigTagNode<
+  NamedTags.assign,
+  ConcreteTwigTagAssignMarkup
+> {}
+export interface ConcreteTwigTagAssignMarkup extends ConcreteBasicNode<ConcreteNodeTypes.AssignMarkup> {
   name: string;
   value: ConcreteTwigVariable;
 }
 
-export interface ConcreteTwigTagCycle
-  extends ConcreteTwigTagNode<NamedTags.cycle, ConcreteTwigTagCycleMarkup> {}
-export interface ConcreteTwigTagCycleMarkup
-  extends ConcreteBasicNode<ConcreteNodeTypes.CycleMarkup> {
+export interface ConcreteTwigTagCycle extends ConcreteTwigTagNode<
+  NamedTags.cycle,
+  ConcreteTwigTagCycleMarkup
+> {}
+export interface ConcreteTwigTagCycleMarkup extends ConcreteBasicNode<ConcreteNodeTypes.CycleMarkup> {
   groupName: ConcreteTwigExpression | null;
   args: ConcreteTwigExpression[];
 }
 
-export interface ConcreteTwigTagRender
-  extends ConcreteTwigTagNode<NamedTags.render, ConcreteTwigTagRenderMarkup> {}
-export interface ConcreteTwigTagInclude
-  extends ConcreteTwigTagNode<NamedTags.include, ConcreteTwigTagRenderMarkup> {}
+export interface ConcreteTwigTagRender extends ConcreteTwigTagNode<
+  NamedTags.render,
+  ConcreteTwigTagRenderMarkup
+> {}
+export interface ConcreteTwigTagInclude extends ConcreteTwigTagNode<
+  NamedTags.include,
+  ConcreteTwigTagRenderMarkup
+> {}
 
-export interface ConcreteTwigTagRenderMarkup
-  extends ConcreteBasicNode<ConcreteNodeTypes.RenderMarkup> {
+export interface ConcreteTwigTagRenderMarkup extends ConcreteBasicNode<ConcreteNodeTypes.RenderMarkup> {
   snippet: ConcreteStringLiteral | ConcreteTwigVariableLookup;
   alias: string | null;
   variable: ConcreteRenderVariableExpression | null;
   args: ConcreteTwigNamedArgument[];
 }
 
-export interface ConcreteRenderVariableExpression
-  extends ConcreteBasicNode<ConcreteNodeTypes.RenderVariableExpression> {
+export interface ConcreteRenderVariableExpression extends ConcreteBasicNode<ConcreteNodeTypes.RenderVariableExpression> {
   kind: 'for' | 'with';
   name: ConcreteTwigExpression;
 }
@@ -362,8 +401,7 @@ export interface ConcreteTwigFilter extends ConcreteBasicNode<ConcreteNodeTypes.
 
 export type ConcreteTwigArgument = ConcreteTwigExpression | ConcreteTwigNamedArgument;
 
-export interface ConcreteTwigNamedArgument
-  extends ConcreteBasicNode<ConcreteNodeTypes.NamedArgument> {
+export interface ConcreteTwigNamedArgument extends ConcreteBasicNode<ConcreteNodeTypes.NamedArgument> {
   name: string;
   value: ConcreteTwigExpression;
 }
@@ -394,8 +432,7 @@ export interface ConcreteTwigRange extends ConcreteBasicNode<ConcreteNodeTypes.R
   end: ConcreteTwigExpression;
 }
 
-export interface ConcreteTwigVariableLookup
-  extends ConcreteBasicNode<ConcreteNodeTypes.VariableLookup> {
+export interface ConcreteTwigVariableLookup extends ConcreteBasicNode<ConcreteNodeTypes.VariableLookup> {
   name: string | null;
   lookups: ConcreteTwigExpression[];
 }
@@ -413,8 +450,7 @@ export interface ConcreteTextNode extends ConcreteBasicNode<ConcreteNodeTypes.Te
   value: string;
 }
 
-export interface ConcreteYamlFrontmatterNode
-  extends ConcreteBasicNode<ConcreteNodeTypes.YAMLFrontmatter> {
+export interface ConcreteYamlFrontmatterNode extends ConcreteBasicNode<ConcreteNodeTypes.YAMLFrontmatter> {
   body: string;
 }
 

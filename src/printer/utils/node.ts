@@ -293,8 +293,8 @@ function hasLeadingLineBreak(node: CraftTwigNode) {
       node.prev
         ? node.prev.position.end
         : (node.parentNode as any).blockStartPosition
-        ? (node.parentNode as any).blockStartPosition.end
-        : (node.parentNode as any).position.start,
+          ? (node.parentNode as any).blockStartPosition.end
+          : (node.parentNode as any).position.start,
       node.position.start,
     )
   );
@@ -310,8 +310,8 @@ function hasTrailingLineBreak(node: CraftTwigNode) {
       node.next
         ? node.next.position.start
         : (node.parentNode as any).blockEndPosition
-        ? (node.parentNode as any).blockEndPosition.start
-        : (node.parentNode as any).position.end,
+          ? (node.parentNode as any).blockEndPosition.start
+          : (node.parentNode as any).position.end,
     )
   );
 }

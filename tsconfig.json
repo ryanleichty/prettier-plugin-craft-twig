@@ -1,28 +1,27 @@
 {
-  "extends": "@tsconfig/node14/tsconfig.json",
+  "extends": "@tsconfig/node24/tsconfig.json",
   "compilerOptions": {
-    "lib": ["es2022"],
+    "lib": ["es2024"],
     "noImplicitAny": true,
     "removeComments": true,
     "declaration": true,
     "preserveConstEnums": true,
     "outDir": "dist",
     "emitDecoratorMetadata": true,
-    "module": "commonjs",
+    "module": "Node16",
     "diagnostics": false,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "inlineSourceMap": true,
-    "target": "ES2022",
+    "target": "ES2024",
     "allowJs": true,
     "jsx": "react",
     "experimentalDecorators": true,
     "allowUnusedLabels": true,
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "types": ["node", "vitest/globals"],
-    "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],

@@ -7,11 +7,9 @@ import { parse } from '../src/parser/parser';
 import { preprocess } from '../src/printer/print-preprocess';
 import { TwigParserOptions } from '../src/types';
 
-const PARAGRAPH_SPLITTER =
-  /(?:\r?\n){2,}(?=\/\/|It|When|If|focus|debug|skip|<)/i;
+const PARAGRAPH_SPLITTER = /(?:\r?\n){2,}(?=\/\/|It|When|If|focus|debug|skip|<)/i;
 
-const TEST_MESSAGE =
-  /^(\/\/|It|When|If|focus|debug|skip)((\s|\S)(?!<)(?!{)(?!---))*./i;
+const TEST_MESSAGE = /^(\/\/|It|When|If|focus|debug|skip)((\s|\S)(?!<)(?!{)(?!---))*./i;
 
 function testMessage(input: string, actual: string) {
   return [

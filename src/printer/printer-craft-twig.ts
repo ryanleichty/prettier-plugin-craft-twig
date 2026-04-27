@@ -1,6 +1,5 @@
 import { doc, Doc } from 'prettier';
-import type { Printer as Printer2 } from 'prettier';
-import type { Printer as Printer3 } from 'prettier3';
+import type { Printer } from 'prettier';
 import {
   AttrDoubleQuoted,
   AttrEmpty,
@@ -42,7 +41,7 @@ import {
   printTwigTag,
 } from '~/printer/print/twig';
 import { printChildren } from '~/printer/print/children';
-import { embed2, embed3 } from '~/printer/embed';
+import { embed } from '~/printer/embed';
 import { RawMarkupKinds } from '~/parser';
 import { getConditionalComment } from '~/parser/conditional-comment';
 
@@ -505,28 +504,15 @@ function printNode(
   }
 }
 
-export const printerCraftTwig2: Printer2<CraftTwigNode> & {
-  preprocess: any;
-} & { getVisitorKeys: any } = {
+export const printerCraftTwig = {
   print: printNode as any,
-  embed: embed2,
+  embed,
   preprocess,
   getVisitorKeys(node: any, nonTraversableKeys: Set<string>) {
     return Object.keys(node).filter(
       (key) => !nonTraversableKeys.has(key) && !nonTraversableProperties.has(key),
     );
   },
-};
-
-export const printerCraftTwig3: Printer3<CraftTwigNode> & {
+} as Printer<CraftTwigNode> & {
   preprocess: any;
-} & { getVisitorKeys: any } = {
-  print: printNode as any,
-  embed: embed3,
-  preprocess,
-  getVisitorKeys(node: any, nonTraversableKeys: Set<string>) {
-    return Object.keys(node).filter(
-      (key) => !nonTraversableKeys.has(key) && !nonTraversableProperties.has(key),
-    );
-  },
-};
+} & { getVisitorKeys: any };

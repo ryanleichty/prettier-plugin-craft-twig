@@ -71,8 +71,8 @@ export function printClosingTagSuffix(node: CraftTwigNode, options: TwigParserOp
   return needsToBorrowParentClosingTagStartMarker(node)
     ? printClosingTagStartMarker(node.parentNode, options)
     : needsToBorrowNextOpeningTagStartMarker(node)
-    ? printOpeningTagStartMarker(node.next)
-    : '';
+      ? printOpeningTagStartMarker(node.next)
+      : '';
 }
 
 export function printClosingTagStartMarker(
@@ -280,8 +280,8 @@ function printAttributes(
   const whitespaceBetweenAttributes = forceNotToBreakAttrContent
     ? ' '
     : options.singleAttributePerLine && node.attributes.length > 1
-    ? hardline
-    : line;
+      ? hardline
+      : line;
 
   const attributes = prettierIgnoreAttributes
     ? replaceEndOfLine(
@@ -317,8 +317,8 @@ function printAttributes(
         ? ' '
         : ''
       : isSelfClosing(node)
-      ? line
-      : softline;
+        ? line
+        : softline;
   }
 
   return [
@@ -362,8 +362,8 @@ export function printOpeningTagPrefix(node: CraftTwigNode, options: TwigParserOp
   return needsToBorrowParentOpeningTagEndMarker(node)
     ? printOpeningTagEndMarker(node.parentNode)
     : needsToBorrowPrevClosingTagEndMarker(node)
-    ? printClosingTagEndMarker(node.prev, options)
-    : '';
+      ? printClosingTagEndMarker(node.prev, options)
+      : '';
 }
 
 // TODO
