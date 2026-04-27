@@ -1,0 +1,149 @@
+It should remove spaces around filters in raw set markup
+{% set value = item.title|trim|lower %}
+
+It should wrap filters in raw set markup when they exceed printWidth
+printWidth: 60
+{%
+  set getWidth = (profile) => profile.width.valuePartsFraction()
+    |slice(0, 2)
+    |filter
+    |join(' ')
+    |fractions
+%}
+
+It should preserve wrapped filter indentation in raw set markup
+printWidth: 60
+{%
+  set getWidth = (profile) => profile.width.valuePartsFraction()
+    |slice(0, 2)
+    |filter
+    |join(' ')
+    |fractions
+%}
+
+It should wrap ternaries in raw filter arguments
+printWidth: 80
+{%
+  set profiles = section.mouldingCollectionsAndProfiles.all()
+    |map(profile =>
+      profile.type.handle == 'mouldingCollection' ? profile.descendants(1).all() :
+      profile.type.handle == 'mouldingProfile' ? profile :
+      null
+    )
+    |flatten
+%}
+
+It should keep short ternaries in raw filter arguments on one line
+printWidth: 120
+{% set profiles = profiles|map(profile => profile.type.handle == 'mouldingProfile' ? profile : null) %}
+
+It should indent multiline set assignment ternaries under the equals
+printWidth: 80
+{%
+  set numOfColumns =
+    layout == 'carousel' ? section.numOfColumnsFive.value :
+    headerPosition == 'top' ? section.numOfColumnsFour.value :
+    section.numOfColumnsThree.value
+%}
+
+It should format filter chains inside ternary consequents
+printWidth: 80
+{%
+  set categoryFilters =
+    showFilters ? computedItems
+      |map(item => item.postCategory.eagerly().one() ?? null)
+      |filter
+      |group(category => category.id)
+      |map(items =>
+        {
+          label: items|first.title,
+          value: items|first.title|camel,
+          count: items|length,
+        }
+      )
+      |sort((a, b) => b.count <=> a.count) :
+    []
+%}
+
+It should expand array literals before filter chains
+printWidth: 80
+{%
+  set sectionClasses = [
+    'Section CardsStickyTextSection',
+    mediaLayout == 'single' ? 'CardsStickyTextSection--single' :
+    'CardsStickyTextSection--double',
+    macros.getSectionSpacing(spacingTop, spacingBottom),
+    macros.getMediaPosition(mediaPosition),
+  ]
+    |filter
+    |join(' ')
+%}
+
+It should keep short array literals before filter chains on one line
+printWidth: 80
+{% set images = [primaryImage, secondaryImage]|filter %}
+
+It should wrap coalescing chains in raw set assignments
+printWidth: 80
+{%
+  set primaryImage =
+    entry.primaryImage.eagerly().one() ???
+    entry.hyperlink.element.images.eagerly().one() ??
+    null
+%}
+
+It should keep short coalescing chains in raw set assignments on one line
+printWidth: 100
+{% set heading = entry.heading ?? entry.hyperlink.element.title ?? null %}
+
+It should trim spaces inside parenthesized raw expressions
+printWidth: 100
+{%
+  set label =
+    button.label ??
+    (isLinkField ? button.hyperlink.label ?? 'Learn More' : isHyperField ? button.hyperlink.getText('Learn More') : null)
+%}
+
+It should indent method chains in raw set assignments
+printWidth: 80
+{%
+  set autoQuery = autoQuery
+    .relatedTo(computedRelations)
+    .notRelatedTo(computedNotRelations)
+    .offset(offset)
+    .limit(limit)
+%}
+
+It should expand object arguments in raw filter arrow functions
+printWidth: 80
+{%
+  set items = collectionGroups
+    |map(group =>
+      include(
+        '_components/product-option-card',
+        {
+          title:
+            group.collectionProfileCount == 1 ? group.collection.title :
+            group.profiles|length == 1 ? group.profiles[0].title :
+            group.collection.title,
+          subtitle: _self.getCollectionSubtitle(group.profiles),
+          mediaItems: group.mouldingItems
+            |map(item =>
+              {
+                media: item.moulding.image.eagerly().one(),
+                label:
+                  item.profile.customTitle ? "#{item.profile.title} #{item.moulding.title}" :
+                  group.collectionProfileCount > 1 ? "#{item.moulding.title} #{_self.getWidth(item.profile)}\"" :
+                  item.moulding.title,
+              }
+            ),
+          loading,
+          sizes: '(min-width: 1280px) 25vw, 80vw',
+        },
+        with_context = false
+      )
+    )
+%}
+
+It should not treat logical or as a filter
+{{ foo || bar }}

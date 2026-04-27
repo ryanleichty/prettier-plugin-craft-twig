@@ -5,7 +5,7 @@ import * as prettier from 'prettier';
 import * as plugin from '../src';
 import { parse } from '../src/parser/parser';
 import { preprocess } from '../src/printer/print-preprocess';
-import { LiquidParserOptions } from '../src/types';
+import { TwigParserOptions } from '../src/types';
 
 const PARAGRAPH_SPLITTER =
   /(?:\r?\n){2,}(?=\/\/|It|When|If|focus|debug|skip|<)/i;
@@ -38,10 +38,10 @@ const TEST_IDEMPOTENCE = !!(
 
 export function assertFormattedEqualsFixed(
   dirname: string,
-  options: Partial<LiquidParserOptions> = {},
+  options: Partial<TwigParserOptions> = {},
 ) {
-  const source = readFile(dirname, 'index.liquid');
-  const expectedResults = readFile(dirname, 'fixed.liquid');
+  const source = readFile(dirname, 'index.twig');
+  const expectedResults = readFile(dirname, 'fixed.twig');
   const trimEnd = (s: string) => s.trimEnd();
 
   const chunks = source.split(PARAGRAPH_SPLITTER).map(trimEnd);
@@ -68,8 +68,8 @@ export function assertFormattedEqualsFixed(
         // Improve the stack trace so that it points to the fixed file instead
         // of this test-helper file. Might make navigation smoother.
         if ((e as any).stack as any) {
-          const fixedUrl = path.join(dirname, 'fixed.liquid');
-          const inputUrl = path.join(dirname, 'index.liquid');
+          const fixedUrl = path.join(dirname, 'fixed.twig');
+          const inputUrl = path.join(dirname, 'index.twig');
           const testUrl = path.join(dirname, 'index.test.ts');
           const fixedOffset = lineOffset(expectedResults, expected);
           const fixedLoc = diffLoc(expected, actual, fixedOffset).join(':');
@@ -77,8 +77,8 @@ export function assertFormattedEqualsFixed(
           (e as any).stack = ((e as any).stack as string).replace(
             /^(\s+)at Context.test \(.*:\d+:\d+\)/im,
             [
-              `$1at fixed.liquid (${fixedUrl}:${fixedLoc})`,
-              `$1at input.liquid (${inputUrl}:${inputLine}:0)`,
+              `$1at fixed.twig (${fixedUrl}:${fixedLoc})`,
+              `$1at input.twig (${inputUrl}:${inputLine}:0)`,
               `$1at assertFormattedEqualsFixed (${testUrl}:5:6)`,
             ].join('\n'),
           );
@@ -111,7 +111,7 @@ function getTestSetup(paragraph: string, index: number) {
     .replace(/\r?\n/g, ' ')
     .trimEnd()
     .replace(/\.$/, '');
-  const prettierOptions: Partial<LiquidParserOptions> = {
+  const prettierOptions: Partial<TwigParserOptions> = {
     printWidth: 80, // We changed the default, but the tests were written with 80 in mind.
     indentSchema: true, // We changed the default, but the tests were written with true in mind.
     trailingComma: 'es5', // prettier 3 changed the default from "es5" to "all", but our tests were written for prettier 2

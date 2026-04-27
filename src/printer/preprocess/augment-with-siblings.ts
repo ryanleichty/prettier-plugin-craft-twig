@@ -1,10 +1,10 @@
 import {
   AugmentedNode,
   Augment,
-  LiquidHtmlNode,
+  CraftTwigNode,
   WithParent,
   WithSiblings,
-  isLiquidHtmlNode,
+  isCraftTwigNode,
 } from '~/types';
 
 export function prev(node: AugmentedNode<WithParent>) {
@@ -19,9 +19,7 @@ export function next(node: AugmentedNode<WithParent>) {
   return collection[collection.indexOf(node) + 1];
 }
 
-function parentCollection(
-  node: AugmentedNode<WithParent>,
-): AugmentedNode<WithParent>[] {
+function parentCollection(node: AugmentedNode<WithParent>): AugmentedNode<WithParent>[] {
   if (!node.parentNode) {
     return [];
   }
@@ -35,7 +33,7 @@ function parentCollection(
       }
     }
 
-    if (isLiquidHtmlNode(parentValue) && parentValue === node) {
+    if (isCraftTwigNode(parentValue) && parentValue === node) {
       return [];
     }
   }
@@ -45,8 +43,8 @@ function parentCollection(
 
 export const augmentWithSiblings: Augment<WithParent> = (_options, node) => {
   const augmentations: WithSiblings = {
-    next: next(node) as LiquidHtmlNode | undefined,
-    prev: prev(node) as LiquidHtmlNode | undefined,
+    next: next(node) as CraftTwigNode | undefined,
+    prev: prev(node) as CraftTwigNode | undefined,
   };
 
   Object.assign(node, augmentations);

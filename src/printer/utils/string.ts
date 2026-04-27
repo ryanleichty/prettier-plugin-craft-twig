@@ -1,9 +1,4 @@
-import {
-  LiquidAstPath,
-  LiquidHtmlNode,
-  LiquidParserOptions,
-  Position,
-} from '~/types';
+import { TwigAstPath, CraftTwigNode, TwigParserOptions, Position } from '~/types';
 
 export function isWhitespace(source: string, loc: number): boolean {
   if (loc < 0 || loc >= source.length) return false;
@@ -39,18 +34,14 @@ export function reindent(lines: string[], skipFirst = false): string[] {
 }
 
 export function originallyHadLineBreaks(
-  path: LiquidAstPath,
-  { locStart, locEnd }: LiquidParserOptions,
+  path: TwigAstPath,
+  { locStart, locEnd }: TwigParserOptions,
 ): boolean {
   const node = path.getValue();
   return hasLineBreakInRange(node.source, locStart(node), locEnd(node));
 }
 
-export function hasLineBreakInRange(
-  source: string,
-  locStart: number,
-  locEnd: number,
-): boolean {
+export function hasLineBreakInRange(source: string, locStart: number, locEnd: number): boolean {
   const indexOfNewLine = source.indexOf('\n', locStart);
   return 0 <= indexOfNewLine && indexOfNewLine < locEnd;
 }
@@ -86,10 +77,7 @@ export function hasMoreThanOneNewLineBetweenNodes(
  * Converting between styles when these features are present would silently
  * change program behavior, so we leave such strings untouched.
  */
-export function transformStringQuotes(
-  markup: string,
-  twigSingleQuote: boolean,
-): string {
+export function transformStringQuotes(markup: string, twigSingleQuote: boolean): string {
   const preferredQuote = twigSingleQuote ? "'" : '"';
 
   // Match strings with the non-preferred quote style

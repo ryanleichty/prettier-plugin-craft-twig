@@ -4,8 +4,8 @@ yarn-error.log
 .DS_Store
 dawn
 TODO
-grammar/liquid-html.ohm.js
+grammar/craft-twig.ohm.js
 standalone.js
 standalone.js.LICENSE.txt
-**/actual.liquid
+**/actual.twig
 coverage

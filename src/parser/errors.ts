@@ -6,18 +6,16 @@ interface LineColPosition {
   column: number;
 }
 
-export class LiquidHTMLCSTParsingError extends SyntaxError {
+export class CraftTwigCSTParsingError extends SyntaxError {
   loc?: { start: LineColPosition; end: LineColPosition };
 
   constructor(ohm: MatchResult) {
     super(ohm.shortMessage);
-    this.name = 'LiquidHTMLParsingError';
+    this.name = 'CraftTwigParsingError';
 
     const input = (ohm as any).input;
     const errorPos = (ohm as any)._rightmostFailurePosition;
-    const lineCol = lineColumn(input).fromIndex(
-      Math.min(errorPos, input.length - 1),
-    );
+    const lineCol = lineColumn(input).fromIndex(Math.min(errorPos, input.length - 1));
 
     // Plugging ourselves into @babel/code-frame since this is how
     // the babel parser can print where the parsing error occured.
@@ -37,17 +35,12 @@ export class LiquidHTMLCSTParsingError extends SyntaxError {
   }
 }
 
-export class LiquidHTMLASTParsingError extends SyntaxError {
+export class CraftTwigASTParsingError extends SyntaxError {
   loc?: { start: LineColPosition; end: LineColPosition };
 
-  constructor(
-    message: string,
-    source: string,
-    startIndex: number,
-    endIndex: number,
-  ) {
+  constructor(message: string, source: string, startIndex: number, endIndex: number) {
     super(message);
-    this.name = 'LiquidHTMLParsingError';
+    this.name = 'CraftTwigParsingError';
 
     const lc = lineColumn(source);
     const start = lc.fromIndex(startIndex);

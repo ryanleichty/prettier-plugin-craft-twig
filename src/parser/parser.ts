@@ -1,8 +1,8 @@
 import { locEnd, locStart } from '~/utils';
-import { toLiquidHtmlAST, LiquidHtmlNode } from '~/parser/stage-2-ast';
+import { toCraftTwigAST, CraftTwigNode } from '~/parser/stage-2-ast';
 
-export function parse(text: string): LiquidHtmlNode {
-  return toLiquidHtmlAST(text);
+export function parse(text: string): CraftTwigNode {
+  return toCraftTwigAST(text);
 }
 
 export const craftTwigAstFormat = 'craft-twig-ast';

@@ -1,11 +1,7 @@
 'use strict';
 
 import { doc, Doc } from 'prettier';
-import {
-  shouldPreserveContent,
-  forceBreakContent,
-  hasNoCloseMarker,
-} from '~/printer/utils';
+import { shouldPreserveContent, forceBreakContent, hasNoCloseMarker } from '~/printer/utils';
 import {
   printOpeningTagPrefix,
   printOpeningTag,
@@ -19,32 +15,24 @@ import { printChildren } from '~/printer/print/children';
 import {
   AstPath,
   NodeTypes,
-  LiquidParserOptions,
-  LiquidPrinter,
+  TwigParserOptions,
+  TwigPrinter,
   HtmlNode,
-  LiquidPrinterArgs,
+  TwigPrinterArgs,
   HtmlRawNode,
 } from '~/types';
 import { RawMarkupKinds } from '~/parser';
 
 const {
-  builders: {
-    breakParent,
-    dedentToRoot,
-    group,
-    indent,
-    hardline,
-    line,
-    softline,
-  },
+  builders: { breakParent, dedentToRoot, group, indent, hardline, line, softline },
 } = doc;
 const { replaceEndOfLine } = doc.utils as any;
 
 export function printRawElement(
   path: AstPath<HtmlRawNode>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
-  _args: LiquidPrinterArgs,
+  options: TwigParserOptions,
+  print: TwigPrinter,
+  _args: TwigPrinterArgs,
 ) {
   const node = path.getValue();
   const attrGroupId = Symbol('element-attr-group-id');
@@ -73,9 +61,9 @@ export function printRawElement(
 
 export function printElement(
   path: AstPath<HtmlNode>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
-  args: LiquidPrinterArgs,
+  options: TwigParserOptions,
+  print: TwigPrinter,
+  args: TwigPrinterArgs,
 ) {
   const node = path.getValue();
   const attrGroupId = Symbol('element-attr-group-id');
@@ -121,10 +109,7 @@ export function printElement(
     );
 
   const printLineBeforeChildren = () => {
-    if (
-      node.firstChild!.hasLeadingWhitespace &&
-      node.firstChild!.isLeadingWhitespaceSensitive
-    ) {
+    if (node.firstChild!.hasLeadingWhitespace && node.firstChild!.isLeadingWhitespaceSensitive) {
       return line;
     }
 
@@ -143,29 +128,19 @@ export function printElement(
       ? needsToBorrowPrevClosingTagEndMarker(node.next)
       : needsToBorrowLastChildClosingTagEndMarker(node.parentNode!);
     if (needsToBorrow) {
-      if (
-        node.lastChild!.hasTrailingWhitespace &&
-        node.lastChild!.isTrailingWhitespaceSensitive
-      ) {
+      if (node.lastChild!.hasTrailingWhitespace && node.lastChild!.isTrailingWhitespaceSensitive) {
         return ' ';
       }
       return '';
     }
-    if (
-      node.lastChild!.hasTrailingWhitespace &&
-      node.lastChild!.isTrailingWhitespaceSensitive
-    ) {
+    if (node.lastChild!.hasTrailingWhitespace && node.lastChild!.isTrailingWhitespaceSensitive) {
       return line;
     }
     return softline;
   };
 
   if (node.children.length === 0) {
-    return printTag(
-      node.hasDanglingWhitespace && node.isDanglingWhitespaceSensitive
-        ? line
-        : '',
-    );
+    return printTag(node.hasDanglingWhitespace && node.isDanglingWhitespaceSensitive ? line : '');
   }
 
   return printTag([

@@ -49,7 +49,7 @@ We support the following comments (either via HTML or Twig comments):
 
 They target the next node in the tree. Unparseable code can't be ignored and will throw an error.
 
-```liquid
+```twig
 {# prettier-ignore #}
 <div         class="x"       >hello world</div            >
 

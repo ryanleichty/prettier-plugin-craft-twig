@@ -36,7 +36,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    include: ['test/twig-*/**/*.test.ts', 'test/utils.test.ts'],
+    include: ['test/**/index.test.ts', 'test/utils.test.ts', 'src/**/*.test.ts'],
     setupFiles: ['test/vitest-setup.ts'],
   },
 });

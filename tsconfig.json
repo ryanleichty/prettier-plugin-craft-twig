@@ -1,7 +1,7 @@
 {
   "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
-    "lib": ["es2020"],
+    "lib": ["es2022"],
     "noImplicitAny": true,
     "removeComments": true,
     "declaration": true,
@@ -13,16 +13,18 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "inlineSourceMap": true,
-    "target": "ES6",
+    "target": "ES2022",
     "allowJs": true,
     "jsx": "react",
     "experimentalDecorators": true,
     "allowUnusedLabels": true,
+    "ignoreDeprecations": "6.0",
+    "types": ["node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "src/**/*.spec.ts"]
+  "exclude": ["node_modules"]
 }

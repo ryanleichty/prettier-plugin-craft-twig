@@ -3,7 +3,7 @@ import type { Plugin as Plugin2 } from 'prettier';
 import type { Plugin as Plugin3 } from 'prettier3';
 import { parsers, craftTwigLanguageName } from '~/parser';
 import { printers2, printers3 } from '~/printer';
-import { LiquidHtmlNode } from '~/types';
+import { CraftTwigNode } from '~/types';
 
 const languages: SupportLanguage[] = [
   {
@@ -19,8 +19,7 @@ const options: SupportOptions = {
     type: 'boolean',
     category: 'TWIG',
     default: true,
-    description:
-      'Use single quotes instead of double quotes in Twig tags and objects.',
+    description: 'Use single quotes instead of double quotes in Twig tags and objects.',
     since: '0.2.0',
   },
   embeddedSingleQuote: {
@@ -51,7 +50,7 @@ const defaultOptions = {
   printWidth: 120,
 };
 
-const plugin2: Plugin2<LiquidHtmlNode> = {
+const plugin2: Plugin2<CraftTwigNode> = {
   languages,
   parsers: parsers as Plugin2['parsers'],
   printers: printers2,
@@ -59,7 +58,7 @@ const plugin2: Plugin2<LiquidHtmlNode> = {
   defaultOptions,
 };
 
-const plugin3: Plugin3<LiquidHtmlNode> = {
+const plugin3: Plugin3<CraftTwigNode> = {
   languages,
   parsers: parsers as Plugin3['parsers'],
   printers: printers3 as any,

@@ -1,5 +1,5 @@
 import { Doc, doc } from 'prettier';
-import { LiquidAstPath, LiquidHtmlNode, LiquidBranch } from '~/types';
+import { TwigAstPath, CraftTwigNode, TwigBranch } from '~/types';
 import { isBranchedTag } from '~/parser';
 import { isEmpty } from '~/printer/utils/array';
 
@@ -10,22 +10,18 @@ export * from '~/printer/utils/node';
 const { builders } = doc;
 const { ifBreak } = builders;
 
-export function getSource(path: LiquidAstPath) {
+export function getSource(path: TwigAstPath) {
   return path.getValue().source;
 }
 
 export function isDeeplyNested(
-  node: Extract<LiquidHtmlNode, { children?: LiquidHtmlNode[] }>,
+  node: Extract<CraftTwigNode, { children?: CraftTwigNode[] }>,
 ): boolean {
   if (!node.children) return false;
   if (isBranchedTag(node)) {
-    return !!node.children.find((child) =>
-      isDeeplyNested(child as LiquidBranch),
-    );
+    return !!node.children.find((child) => isDeeplyNested(child as TwigBranch));
   }
-  return !!node.children.find(
-    (child) => !isEmpty((child as any).children || []),
-  );
+  return !!node.children.find((child) => !isEmpty((child as any).children || []));
 }
 
 // Optionally converts a '' into '-' if any of the parent group breaks and source[loc] is non space.
@@ -53,8 +49,7 @@ export function ifBreakChain(
   if (groupIds.includes(FORCE_BREAK_GROUP_ID)) return breaksContent;
   if (groupIds.includes(FORCE_FLAT_GROUP_ID)) return flatContent;
   return groupIds.reduce(
-    (currFlatContent, groupId) =>
-      ifBreak(breaksContent, currFlatContent, { groupId }),
+    (currFlatContent, groupId) => ifBreak(breaksContent, currFlatContent, { groupId }),
     flatContent,
   );
 }

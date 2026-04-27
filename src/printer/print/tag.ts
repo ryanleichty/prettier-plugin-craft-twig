@@ -6,9 +6,9 @@ import {
   HtmlElement,
   HtmlNode,
   HtmlSelfClosingElement,
-  LiquidHtmlNode,
-  LiquidParserOptions,
-  LiquidPrinter,
+  CraftTwigNode,
+  TwigParserOptions,
+  TwigPrinter,
   NodeTypes,
   Position,
 } from '~/types';
@@ -18,7 +18,7 @@ import {
   isHtmlNode,
   isVoidElement,
   isHtmlElement,
-  isLiquidNode,
+  isTwigNode,
   isPreLikeNode,
   hasNoCloseMarker,
   isTextLikeNode,
@@ -38,58 +38,36 @@ const {
 } = doc;
 const { replaceEndOfLine } = doc.utils as any;
 
-export function printClosingTag(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
-) {
+export function printClosingTag(node: CraftTwigNode, options: TwigParserOptions) {
   return [
     hasNoCloseMarker(node) ? '' : printClosingTagStart(node, options),
     printClosingTagEnd(node, options),
   ];
 }
 
-export function printClosingTagStart(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
-) {
-  return node.lastChild &&
-    needsToBorrowParentClosingTagStartMarker(node.lastChild)
+export function printClosingTagStart(node: CraftTwigNode, options: TwigParserOptions) {
+  return node.lastChild && needsToBorrowParentClosingTagStartMarker(node.lastChild)
     ? ''
-    : [
-        printClosingTagPrefix(node, options),
-        printClosingTagStartMarker(node, options),
-      ];
+    : [printClosingTagPrefix(node, options), printClosingTagStartMarker(node, options)];
 }
 
-export function printClosingTagEnd(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
-) {
+export function printClosingTagEnd(node: CraftTwigNode, options: TwigParserOptions) {
   return (
     node.next
       ? needsToBorrowPrevClosingTagEndMarker(node.next)
       : needsToBorrowLastChildClosingTagEndMarker(node.parentNode!)
   )
     ? ''
-    : [
-        printClosingTagEndMarker(node, options),
-        printClosingTagSuffix(node, options),
-      ];
+    : [printClosingTagEndMarker(node, options), printClosingTagSuffix(node, options)];
 }
 
-function printClosingTagPrefix(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
-) {
+function printClosingTagPrefix(node: CraftTwigNode, options: TwigParserOptions) {
   return needsToBorrowLastChildClosingTagEndMarker(node)
     ? printClosingTagEndMarker(node.lastChild, options)
     : '';
 }
 
-export function printClosingTagSuffix(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
-) {
+export function printClosingTagSuffix(node: CraftTwigNode, options: TwigParserOptions) {
   return needsToBorrowParentClosingTagStartMarker(node)
     ? printClosingTagStartMarker(node.parentNode, options)
     : needsToBorrowNextOpeningTagStartMarker(node)
@@ -98,8 +76,8 @@ export function printClosingTagSuffix(
 }
 
 export function printClosingTagStartMarker(
-  node: LiquidHtmlNode | undefined,
-  options: LiquidParserOptions,
+  node: CraftTwigNode | undefined,
+  options: TwigParserOptions,
 ) {
   if (!node) return '';
   /* istanbul ignore next */
@@ -117,8 +95,8 @@ export function printClosingTagStartMarker(
 }
 
 export function printClosingTagEndMarker(
-  node: LiquidHtmlNode | undefined,
-  options: LiquidParserOptions,
+  node: CraftTwigNode | undefined,
+  options: TwigParserOptions,
 ) {
   if (!node) return '';
   if (shouldNotPrintClosingTag(node, options)) {
@@ -146,10 +124,7 @@ export function printClosingTagEndMarker(
   }
 }
 
-function shouldNotPrintClosingTag(
-  node: LiquidHtmlNode,
-  _options: LiquidParserOptions,
-) {
+function shouldNotPrintClosingTag(node: CraftTwigNode, _options: TwigParserOptions) {
   return (
     !hasNoCloseMarker(node) &&
     !(node as any).blockEndPosition &&
@@ -157,7 +132,7 @@ function shouldNotPrintClosingTag(
   );
 }
 
-export function needsToBorrowPrevClosingTagEndMarker(node: LiquidHtmlNode) {
+export function needsToBorrowPrevClosingTagEndMarker(node: CraftTwigNode) {
   /**
    *     <p></p
    *     >123
@@ -168,7 +143,7 @@ export function needsToBorrowPrevClosingTagEndMarker(node: LiquidHtmlNode) {
    *     ^
    */
   return (
-    !isLiquidNode(node) &&
+    !isTwigNode(node) &&
     node.prev &&
     // node.prev.type !== 'docType' &&
     isHtmlNode(node.prev) &&
@@ -176,9 +151,7 @@ export function needsToBorrowPrevClosingTagEndMarker(node: LiquidHtmlNode) {
   );
 }
 
-export function needsToBorrowLastChildClosingTagEndMarker(
-  node: LiquidHtmlNode,
-) {
+export function needsToBorrowLastChildClosingTagEndMarker(node: CraftTwigNode) {
   /**
    *     <p
    *       ><a></a
@@ -195,7 +168,7 @@ export function needsToBorrowLastChildClosingTagEndMarker(
   );
 }
 
-export function needsToBorrowParentClosingTagStartMarker(node: LiquidHtmlNode) {
+export function needsToBorrowParentClosingTagStartMarker(node: CraftTwigNode) {
   /**
    *     <p>
    *       123</p
@@ -211,13 +184,12 @@ export function needsToBorrowParentClosingTagStartMarker(node: LiquidHtmlNode) {
     isHtmlNode(node.parentNode) &&
     !node.next &&
     hasMeaningfulLackOfTrailingWhitespace(node) &&
-    !isLiquidNode(node) &&
-    (isTextLikeNode(getLastDescendant(node)) ||
-      isLiquidNode(getLastDescendant(node)))
+    !isTwigNode(node) &&
+    (isTextLikeNode(getLastDescendant(node)) || isTwigNode(getLastDescendant(node)))
   );
 }
 
-export function needsToBorrowNextOpeningTagStartMarker(node: LiquidHtmlNode) {
+export function needsToBorrowNextOpeningTagStartMarker(node: CraftTwigNode) {
   /**
    *     123<p
    *        ^^
@@ -231,7 +203,7 @@ export function needsToBorrowNextOpeningTagStartMarker(node: LiquidHtmlNode) {
   );
 }
 
-export function needsToBorrowParentOpeningTagEndMarker(node: LiquidHtmlNode) {
+export function needsToBorrowParentOpeningTagEndMarker(node: CraftTwigNode) {
   /**
    *     <p
    *       >123
@@ -245,7 +217,7 @@ export function needsToBorrowParentOpeningTagEndMarker(node: LiquidHtmlNode) {
     isHtmlNode(node.parentNode) &&
     !node.prev &&
     hasMeaningfulLackOfLeadingWhitespace(node) &&
-    !isLiquidNode(node)
+    !isTwigNode(node)
   );
 }
 
@@ -254,8 +226,8 @@ export function needsToBorrowParentOpeningTagEndMarker(node: LiquidHtmlNode) {
  */
 function printAttributes(
   path: AstPath<HtmlNode>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
+  options: TwigParserOptions,
+  print: TwigPrinter,
   attrGroupId: symbol,
 ) {
   const node = path.getValue();
@@ -280,11 +252,7 @@ function printAttributes(
     let extraNewline: Doc = '';
     if (
       attrNode.prev &&
-      hasMoreThanOneNewLineBetweenNodes(
-        attrNode.source,
-        attrNode.prev,
-        attrNode,
-      )
+      hasMoreThanOneNewLineBetweenNodes(attrNode.source, attrNode.prev, attrNode)
     ) {
       extraNewline = hardline;
     }
@@ -297,9 +265,7 @@ function printAttributes(
     .includes('\n');
 
   const isSingleLineLinkTagException =
-    options.singleLineLinkTags &&
-    typeof node.name === 'string' &&
-    node.name === 'link';
+    options.singleLineLinkTags && typeof node.name === 'string' && node.name === 'link';
 
   const shouldNotBreakAttributes =
     ((isHtmlElement(node) && node.children.length > 0) ||
@@ -307,10 +273,9 @@ function printAttributes(
       isSelfClosing(node)) &&
     !forceBreakAttrContent &&
     node.attributes.length === 1 &&
-    !isLiquidNode(node.attributes[0]);
+    !isTwigNode(node.attributes[0]);
 
-  const forceNotToBreakAttrContent =
-    isSingleLineLinkTagException || shouldNotBreakAttributes;
+  const forceNotToBreakAttrContent = isSingleLineLinkTagException || shouldNotBreakAttributes;
 
   const whitespaceBetweenAttributes = forceNotToBreakAttrContent
     ? ' '
@@ -335,16 +300,14 @@ function printAttributes(
      *           ~
      *       >456
      */
-    (node.firstChild &&
-      needsToBorrowParentOpeningTagEndMarker(node.firstChild)) ||
+    (node.firstChild && needsToBorrowParentOpeningTagEndMarker(node.firstChild)) ||
     /**
      *     <span
      *       >123<meta
      *                ~
      *     /></span>
      */
-    (hasNoCloseMarker(node) &&
-      needsToBorrowLastChildClosingTagEndMarker(node.parentNode!)) ||
+    (hasNoCloseMarker(node) && needsToBorrowLastChildClosingTagEndMarker(node.parentNode!)) ||
     forceNotToBreakAttrContent
   ) {
     trailingInnerWhitespace = isSelfClosing(node) ? ' ' : '';
@@ -368,17 +331,16 @@ function printAttributes(
   ];
 }
 
-function printOpeningTagEnd(node: LiquidHtmlNode) {
-  return node.firstChild &&
-    needsToBorrowParentOpeningTagEndMarker(node.firstChild)
+function printOpeningTagEnd(node: CraftTwigNode) {
+  return node.firstChild && needsToBorrowParentOpeningTagEndMarker(node.firstChild)
     ? ''
     : printOpeningTagEndMarker(node);
 }
 
 export function printOpeningTag(
   path: AstPath<HtmlNode>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
+  options: TwigParserOptions,
+  print: TwigPrinter,
   attrGroupId: symbol,
 ) {
   const node = path.getValue();
@@ -390,19 +352,13 @@ export function printOpeningTag(
   ];
 }
 
-export function printOpeningTagStart(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
-) {
+export function printOpeningTagStart(node: CraftTwigNode, options: TwigParserOptions) {
   return node.prev && needsToBorrowNextOpeningTagStartMarker(node.prev)
     ? ''
     : [printOpeningTagPrefix(node, options), printOpeningTagStartMarker(node)];
 }
 
-export function printOpeningTagPrefix(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
-) {
+export function printOpeningTagPrefix(node: CraftTwigNode, options: TwigParserOptions) {
   return needsToBorrowParentOpeningTagEndMarker(node)
     ? printOpeningTagEndMarker(node.parentNode)
     : needsToBorrowPrevClosingTagEndMarker(node)
@@ -411,7 +367,7 @@ export function printOpeningTagPrefix(
 }
 
 // TODO
-export function printOpeningTagStartMarker(node: LiquidHtmlNode | undefined) {
+export function printOpeningTagStartMarker(node: CraftTwigNode | undefined) {
   if (!node) return '';
   switch (node.type) {
     case NodeTypes.HtmlComment:
@@ -430,7 +386,7 @@ export function printOpeningTagStartMarker(node: LiquidHtmlNode | undefined) {
   }
 }
 
-export function printOpeningTagEndMarker(node: LiquidHtmlNode | undefined) {
+export function printOpeningTagEndMarker(node: CraftTwigNode | undefined) {
   if (!node) return '';
   switch (node.type) {
     // case 'ieConditionalComment':
@@ -451,30 +407,18 @@ export function printOpeningTagEndMarker(node: LiquidHtmlNode | undefined) {
 }
 
 export function getNodeContent(
-  node: Extract<
-    HtmlNode,
-    { blockStartPosition: Position; blockEndPosition: Position }
-  >,
-  options: LiquidParserOptions,
+  node: Extract<HtmlNode, { blockStartPosition: Position; blockEndPosition: Position }>,
+  options: TwigParserOptions,
 ) {
   let start = node.blockStartPosition.end;
-  if (
-    node.firstChild &&
-    needsToBorrowParentOpeningTagEndMarker(node.firstChild)
-  ) {
+  if (node.firstChild && needsToBorrowParentOpeningTagEndMarker(node.firstChild)) {
     start -= printOpeningTagEndMarker(node).length;
   }
 
   let end = node.blockEndPosition.start;
-  if (
-    node.lastChild &&
-    needsToBorrowParentClosingTagStartMarker(node.lastChild)
-  ) {
+  if (node.lastChild && needsToBorrowParentClosingTagStartMarker(node.lastChild)) {
     end += printClosingTagStartMarker(node, options).length;
-  } else if (
-    node.lastChild &&
-    needsToBorrowLastChildClosingTagEndMarker(node)
-  ) {
+  } else if (node.lastChild && needsToBorrowLastChildClosingTagEndMarker(node)) {
     end -= printClosingTagEndMarker(node.lastChild, options).length;
   }
 
@@ -482,11 +426,7 @@ export function getNodeContent(
 }
 
 function getCompoundName(
-  node:
-    | HtmlElement
-    | HtmlSelfClosingElement
-    | HtmlDanglingMarkerOpen
-    | HtmlDanglingMarkerClose,
+  node: HtmlElement | HtmlSelfClosingElement | HtmlDanglingMarkerOpen | HtmlDanglingMarkerClose,
 ): string {
   return node.name
     .map((part) => {

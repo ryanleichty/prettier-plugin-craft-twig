@@ -1,0 +1,531 @@
+Helpers {
+  Node = TextNode*
+  TextNode = AnyExceptPlus<openControl>
+  openControl = empty
+
+  empty = /* nothing */
+  anyExcept<lit> = (~ lit any)
+  anyExceptStar<lit> = (~ lit any)*
+  anyExceptPlus<lit> = (~ lit any)+
+  AnyExcept<lit> = (~ lit any)
+  AnyExceptPlus<lit> = (~ lit any)+
+  AnyExceptStar<lit> = (~ lit any)*
+  identifierCharacter = alnum | "_" | "-"
+
+  orderedListOf<a, b, sep> =
+    | nonemptyOrderedListOf<a, b, sep>
+    | emptyListOf<a, sep>
+  nonemptyOrderedListOf<a, b, sep> =
+    | nonemptyListOf<b, sep>
+    | nonemptyOrderedListOfBoth<a, b, sep>
+    | nonemptyListOf<a, sep>
+  nonemptyOrderedListOfBoth<a, b, sep> =
+    nonemptyListOf<a, sep> (sep nonemptyListOf<b, sep>)
+
+  singleQuote = "'" | "‘" | "’"
+  doubleQuote = "\"" | "“" | "”"
+  controls = "\u{007F}".."\u{009F}"
+  noncharacters = "\u{FDD0}".."\u{FDEF}"
+  newline = "\r"? "\n"
+}
+
+Twig <: Helpers {
+  Node := (twigNode | TextNode)*
+  openControl := "{{" | "{%"
+  endOfTagName = &("-%}" | "-}}" | "%}" | "}}")
+  endOfVarName = ~identifierCharacter
+  endOfIdentifier = endOfTagName | endOfVarName
+
+  twigNode =
+    | twigBlockComment
+    | twigRawTag
+    | twigDrop
+    | twigTagClose
+    | twigTagOpen
+    | twigTag
+    | twigInlineComment
+
+  twigTagStrict =
+    | twigTagAssign
+    | twigTagBreak
+    | twigTagCase
+    | twigTagContinue
+    | twigTagCycle
+    | twigTagDecrement
+    | twigTagDefault
+    | twigTagEcho
+    | twigTagElse
+    | twigTagElseif
+    | twigTagElsif
+    | twigTagInclude
+    | twigTagIncrement
+    | twigTagLayout
+    | twigTagTwig
+    | twigTagRender
+    | twigTagSection
+    | twigTagSections
+
+  twigTag =
+    | twigTagStrict
+    | twigTagBaseCase
+
+  twigTagOpenStrict =
+    | twigTagOpenSet
+    | twigTagOpenCapture
+    | twigTagOpenForm
+    | twigTagOpenFor
+    | twigTagOpenTablerow
+    | twigTagOpenIf
+    | twigTagOpenPaginate
+    | twigTagOpenSwitch
+    | twigTagOpenUnless
+
+  twigTagOpen =
+    | twigTagOpenStrict
+    | twigTagOpenBaseCase
+
+  twigTagClose = "{%" "-"? space* "end" blockCloseName space* tagMarkup "-"? "%}"
+
+  // These two are the same but transformed differently
+  twigTagRule<name, markup> =
+    "{%" "-"? space* (name endOfIdentifier) space* markup "-"? "%}"
+  twigTagOpenRule<name, markup> =
+    "{%" "-"? space* (name endOfIdentifier) space* markup "-"? "%}"
+
+  twigTagBaseCase = twigTagRule<twigTagName, tagMarkup>
+
+  twigTagEcho = twigTagRule<"echo", twigTagEchoMarkup>
+  twigTagEchoMarkup = twigVariable
+
+  twigTagAssign = twigTagRule<"assign", twigTagAssignMarkup>
+  twigTagAssignMarkup = variableSegment space* "=" space* twigVariable
+
+  twigTagCycle = twigTagRule<"cycle", twigTagCycleMarkup>
+  twigTagCycleMarkup = (twigExpression ":")? space* nonemptyListOf<twigExpression, argumentSeparator> space*
+
+  twigTagIncrement = twigTagRule<"increment", variableSegmentAsLookupMarkup>
+  twigTagDecrement = twigTagRule<"decrement", variableSegmentAsLookupMarkup>
+  twigTagOpenCapture = twigTagOpenRule<"capture", variableSegmentAsLookupMarkup>
+  twigTagOpenSet = twigTagOpenRule<"set", variableSegmentAsLookupMarkup>
+  variableSegmentAsLookupMarkup = variableSegmentAsLookup space*
+
+  twigTagSection = twigTagRule<"section", twigTagSectionMarkup>
+  twigTagSectionMarkup = twigString space*
+
+  twigTagSections = twigTagRule<"sections", twigTagSectionsMarkup>
+  twigTagSectionsMarkup = twigString space*
+
+  twigTagLayout = twigTagRule<"layout", twigTagLayoutMarkup>
+  twigTagLayoutMarkup = twigExpression space*
+
+  // We'll black hole the statement and switch parser in the cst builder
+  // We do this because it's technically the same grammar (with minor redefinitions)
+  // and it would be a huge chore and maintenance hell to rewrite all the rules with
+  // hspace = " " | "\t"
+  //
+  // The alternative is that this grammar parses the {% twig tagMarkup %} as its own string,
+  // and then we switch to the TwigStatement grammar that
+  // redefines twigTagOpenRule, twigTagRule, and space.
+  twigTagTwig = twigTagRule<"twig", twigTagTwigMarkup>
+  twigTagTwigMarkup = tagMarkup
+
+  twigTagInclude = twigTagRule<"include", twigTagRenderMarkup>
+  twigTagRender = twigTagRule<"render", twigTagRenderMarkup>
+  twigTagRenderMarkup =
+    snippetExpression renderVariableExpression? renderAliasExpression? (argumentSeparatorOptionalComma tagArguments) space*
+  snippetExpression = twigString | variableSegmentAsLookup
+  renderVariableExpression = space+ ("for" | "with") space+ twigExpression
+  renderAliasExpression = space+ "as" space+ variableSegment
+
+  twigTagOpenBaseCase = twigTagOpenRule<blockName, tagMarkup>
+
+  twigTagOpenForm = twigTagOpenRule<"form", twigTagOpenFormMarkup>
+  twigTagOpenFormMarkup = arguments space*
+
+  twigTagOpenFor = twigTagOpenRule<"for", twigTagOpenForMarkup>
+  twigTagOpenForMarkup =
+    variableSegment space* "in" space* twigExpression
+    (space* "reversed")? argumentSeparatorOptionalComma
+    tagArguments space*
+
+  // It's the same, the difference is support for different named arguments
+  twigTagOpenTablerow = twigTagOpenRule<"tablerow", twigTagOpenForMarkup>
+
+  twigTagOpenSwitch = twigTagOpenRule<"switch", twigTagOpenSwitchMarkup>
+  twigTagOpenSwitchMarkup = twigExpression space*
+
+  twigTagCase = twigTagRule<"case", twigTagCaseMarkup>
+  twigTagCaseMarkup = twigExpression space*
+
+  twigTagDefault = twigTagRule<"default", empty>
+
+  twigTagOpenIf = twigTagOpenRule<"if", twigTagOpenConditionalMarkup>
+  twigTagOpenUnless = twigTagOpenRule<"unless", twigTagOpenConditionalMarkup>
+  twigTagElsif = twigTagRule<"elsif", twigTagOpenConditionalMarkup>
+  twigTagElseif = twigTagRule<"elseif", twigTagOpenConditionalMarkup>
+
+  twigTagBreak = twigTagRule<"break", empty>
+  twigTagContinue = twigTagRule<"continue", empty>
+  twigTagElse = twigTagRule<"else", empty>
+
+  twigTagOpenConditionalMarkup = nonemptyListOf<condition, conditionSeparator> space*
+  conditionSeparator = &logicalOperator
+  condition = logicalOperator? space* (comparison | twigExpression) space*
+  logicalOperator = ("and" | "or") ~identifier
+  comparison = twigExpression space* comparator space* twigExpression
+  comparator =
+    ( "=="
+    | "!="
+    | ">="
+    | "<="
+    | ">"
+    | "<")
+    | ("contains" ~identifier)
+
+  twigTagOpenPaginate = twigTagOpenRule<"paginate", twigTagOpenPaginateMarkup>
+  twigTagOpenPaginateMarkup =
+    twigExpression space+ "by" space+ twigExpression argumentSeparatorOptionalComma tagArguments space*
+
+  twigDrop = "{{" "-"? space* twigDropCases "-"? "}}"
+  twigDropCases = twigVariable | twigDropBaseCase
+  twigDropBaseCase = anyExceptStar<("-}}" | "}}")>
+  twigInlineComment = "{#" "-"? space? twigTagMarkup "-"? "#}"
+
+  twigRawTag =
+    | twigRawTagImpl<"css">
+    | twigRawTagImpl<"html">
+    | twigRawTagImpl<"js">
+    | twigRawTagImpl<"raw">
+    | twigRawTagImpl<"script">
+    | twigRawTagImpl<"verbatim">
+    | twigRawTagImpl<"javascript">
+    | twigRawTagImpl<"schema">
+    | twigRawTagImpl<"stylesheet">
+    | twigRawTagImpl<"style">
+  twigRawTagImpl<name> =
+    "{%" "-"? space* (name endOfIdentifier) space* tagMarkup "-"? "%}"
+    anyExceptStar<twigRawTagClose<name>>
+    "{%" "-"? space* "end" (name endOfIdentifier) space* "-"? "%}"
+  twigRawTagClose<name> =
+    "{%" "-"? space* "end" (name endOfIdentifier) space* "-"? "%}"
+
+  twigBlockComment =
+    commentBlockStart
+      (twigBlockComment | anyExceptPlus<(commentBlockStart | commentBlockEnd)>)*
+    commentBlockEnd
+  commentBlockStart = "{%" "-"? space* ("comment"    endOfIdentifier) space* tagMarkup "-"? "%}"
+  commentBlockEnd   = "{%" "-"? space* ("endcomment" endOfIdentifier) space* tagMarkup "-"? "%}"
+
+  // In order for the grammar to "fallback" to the base case, this
+  // rule must pass if and only if we support what we parse. This
+  // implies that—since we don't support filters yet—we have a
+  // positive lookahead on "-}}" or "}}" in the rule. We do this
+  // because we'd otherwise positively match the following string
+  // instead of falling back to the other rule:
+  // {{ 'string' | some_filter }}
+  twigVariable = twigExpression twigFilter* space* &twigStatementEnd
+  twigStatementEnd = ("-}}" | "}}" | "-%}" | "%}")
+
+  twigExpression =
+    | twigString
+    | twigNumber
+    | twigLiteral
+    | twigRange
+    | twigVariableLookup
+
+  twigString = twigSingleQuotedString | twigDoubleQuotedString
+  twigSingleQuotedString = "'" anyExceptStar<("'"| "%}" | "}}")> "'"
+  twigDoubleQuotedString = "\"" anyExceptStar<("\""| "%}" | "}}")> "\""
+
+  twigNumber = twigFloat | twigInteger
+  twigInteger = "-"? digit+
+  twigFloat = "-"? digit+ "." digit+
+
+  twigLiteral =
+    ( "true"
+    | "false"
+    | "blank"
+    | "empty"
+    | "nil"
+    | "null"
+    ) endOfIdentifier
+
+  twigRange =
+    "(" space* twigExpression space* ".." space* twigExpression space* ")"
+
+  twigVariableLookup =
+    | variableSegment lookup*
+    | empty lookup+
+  lookup =
+    | indexLookup
+    | dotLookup
+  indexLookup = space* "[" space* twigExpression space* "]"
+  dotLookup = space* "." space* identifier
+
+  twigFilter = space* "|" space* identifier (space* ":" space* arguments)?
+
+  arguments = nonemptyOrderedListOf<positionalArgument, namedArgument, argumentSeparator>
+  argumentSeparator = space* "," space*
+  argumentSeparatorOptionalComma = space* ","? space*
+  positionalArgument = twigExpression ~(space* ":")
+  namedArgument = variableSegment space* ":" space* twigExpression
+  tagArguments = listOf<namedArgument, argumentSeparatorOptionalComma>
+
+  variableSegment = (letter | "_") identifierCharacter*
+  variableSegmentAsLookup = variableSegment
+  identifier = variableSegment "?"?
+
+  tagMarkup = anyExceptStar<("-%}"| "%}")>
+  twigTagMarkup = anyExceptStar<("-#}"| "#}")>
+
+  twigTagName =
+    letter (alnum | "_")*
+
+  blockName =
+    ( "apply"
+    | "autoescape"
+    | "block"
+    | "cache"
+    | "capture"
+    | "embed"
+    | "form"
+    | "for"
+    | "html"
+    | "ifchildren"
+    | "ifchanged"
+    | "if"
+    | "js"
+    | "macro"
+    | "namespace"
+    | "nav"
+    | "paginate"
+    | "sandbox"
+    | "script"
+    | "switch"
+    | "tag"
+    | "tablerow"
+    | "unless"
+    | "verbatim"
+    | "with"
+    ) endOfIdentifier
+  blockCloseName =
+    ( blockName
+    | "set"
+    ) endOfIdentifier
+}
+
+TwigStatement <: Twig {
+  Node := listOf<TwigStatement, statementSep> (space | newline)*
+
+  // This is the big brains moment: we redefine space to exclude newlines.
+  //
+  // Which means that all our other Twig rules can be reused
+  // without modification(!)
+  //
+  // We don't need to maintain rules like this:
+  // - twigVariable<space>
+  // - twigExpression<space>
+  // - variableLookup<space>
+  // - ... long list of stuff that takes space as param
+  // - twigString<space>
+  //
+  // All we need is this little, VERY IMPORTANT, part right here that
+  // make it so we can parse the same way in Twig tags.
+  //
+  // I'm putting in this huge comment so that it's more obvious.
+  space := " " | "\t"
+
+  TwigStatement =
+    | twigBlockComment
+    | twigRawTag
+    | twigTagClose
+    | twigTagOpen
+    | twigTag
+    | twigInlineComment
+
+  twigTagOpenRule<name, markup>
+    := (name ~identifierCharacter) space* markup &twigStatementEnd
+
+  twigTagRule<name, markup>
+    := (name ~identifierCharacter) space* markup &twigStatementEnd
+
+  twigTagClose
+    := "end" (blockCloseName ~identifierCharacter) space* tagMarkup &twigStatementEnd
+
+  twigRawTagImpl<name>
+    := (name ~identifierCharacter) space* tagMarkup newline
+      anyExceptStar<twigRawTagClose<name>>
+      "end" name space* &twigStatementEnd
+
+  twigRawTagClose<name>
+    := "end" name space* &twigStatementEnd
+
+  twigBlockComment :=
+    commentBlockStart statementSep
+      (listOf<twigCommentBlockStatement, statementSep> statementSep)?
+    commentBlockEnd
+
+  twigCommentBlockStatement =
+    | twigBlockComment
+    | nonTerminalCommentLine
+
+  commentBlockStart
+    := ("comment" ~identifierCharacter) space* tagMarkup
+
+  commentBlockEnd
+    := ("endcomment" ~identifierCharacter) space* tagMarkup
+
+  nonTerminalCommentLine
+    = ~commentBlockEnd anyExceptPlus<newline>
+
+  twigInlineComment
+    := space? tagMarkup &twigStatementEnd
+
+  tagMarkup := anyExceptStar<twigStatementEnd>
+
+  // trailing whitespace, newline, + anything else before the next tag
+  statementSep = space* newline (space | newline)*
+
+  twigStatementEnd := newline | end
+}
+
+CraftTwig <: Twig {
+  Node := yamlFrontmatter? (HtmlNode | twigNode | TextNode)*
+  openControl += "<"
+
+  yamlFrontmatter =
+    "---" newline anyExceptStar<"---"> "---" newline
+
+  HtmlNode =
+    | HtmlDoctype
+    | HtmlComment
+    | HtmlRawTag
+    | HtmlVoidElement
+    | HtmlSelfClosingElement
+    | HtmlTagClose
+    | HtmlTagOpen
+
+  // https://html.spec.whatwg.org/multipage/syntax.html#the-doctype
+  HtmlDoctype =
+    #("<!" caseInsensitive<"doctype"> space+ caseInsensitive<"html">) legacyDoctypeString? ">"
+  legacyDoctypeString
+    = anyExceptPlus<">">
+
+  HtmlComment = "<!--" #(anyExceptStar<"-->"> "-->")
+
+  // These are black holes, we'll ignore what's in them
+  HtmlRawTag =
+    | HtmlRawTagImpl<"script">
+    | HtmlRawTagImpl<"style">
+    | HtmlRawTagImpl<"svg">
+
+  HtmlRawTagImpl<name> =
+    TagStart<name>
+      (HtmlRawTagImpl<name> | AnyExceptPlus<(TagStart<name> | TagEnd<name>)>)*
+    TagEnd<name>
+  TagStart<name> = "<" name AttrList ">"
+  TagEnd<name> = "</" name ">"
+
+  HtmlVoidElement =
+    #("<" voidElementName &(space | "/" | ">")) AttrList "/"? ">"
+
+  HtmlSelfClosingElement =
+    #("<" tagName) AttrList "/>"
+
+  HtmlTagOpen =
+    #("<" tagName) AttrList ">"
+
+  HtmlTagClose =
+    #("</" tagName) ">"
+
+  tagName = leadingTagNamePart trailingTagNamePart*
+
+  // The difference here is that the first text part must start
+  // with a letter, but trailing text parts don't have that
+  // requirement
+  leadingTagNamePart =
+    | twigDrop
+    | leadingTagNameTextNode
+
+  trailingTagNamePart =
+    | twigDrop
+    | trailingTagNameTextNode
+
+  leadingTagNameTextNode = letter (alnum | "-" | ":")*
+  trailingTagNameTextNode = (alnum | "-" | ":")+
+
+  AttrList = Attr*
+
+  Attr =
+    twigNode | AttrSingleQuoted | AttrDoubleQuoted | AttrUnquoted | attrEmpty
+
+  attrEmpty = attrName
+
+  AttrUnquoted = attrName "=" attrUnquotedValue
+  AttrSingleQuoted = attrName "=" singleQuote #(attrSingleQuotedValue singleQuote)
+  AttrDoubleQuoted = attrName "=" doubleQuote #(attrDoubleQuotedValue doubleQuote)
+
+  attrName = (twigDrop | attrNameTextNode)+
+
+  // https://html.spec.whatwg.org/#attributes-2
+  attrNameTextNode = anyExceptPlus<(space | quotes | "=" | ">" | "/>" | "{{" | "{%" | controls | noncharacters)>
+  attrUnquotedValue = (twigDrop | attrUnquotedTextNode)*
+  attrSingleQuotedValue = (twigNode | attrSingleQuotedTextNode)*
+  attrDoubleQuotedValue = (twigNode | attrDoubleQuotedTextNode)*
+
+  attrUnquotedTextNode = anyExceptPlus<(space | quotes | "=" | "<" | ">" | "`" | "{{" | "{%")>
+  attrSingleQuotedTextNode = anyExceptPlus<(singleQuote | "{{" | "{%")>
+  attrDoubleQuotedTextNode = anyExceptPlus<(doubleQuote | "{{" | "{%")>
+
+  quotes = singleQuote | doubleQuote
+
+  // https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#void-element
+  voidElementName =
+    ( caseInsensitive<"area">
+    | caseInsensitive<"base">
+    | caseInsensitive<"br">
+    | caseInsensitive<"col">
+    | caseInsensitive<"command">
+    | caseInsensitive<"embed">
+    | caseInsensitive<"hr">
+    | caseInsensitive<"img">
+    | caseInsensitive<"input">
+    | caseInsensitive<"keygen">
+    | caseInsensitive<"link">
+    | caseInsensitive<"meta">
+    | caseInsensitive<"param">
+    | caseInsensitive<"source">
+    | caseInsensitive<"track">
+    | caseInsensitive<"wbr">
+    ) ~identifierCharacter
+}
+
+StrictTwig <: Twig {
+  twigTag := twigTagStrict
+  twigTagOpen := twigTagOpenStrict
+}
+
+StrictTwigStatement <: TwigStatement {
+  twigTag := twigTagStrict
+  twigTagOpen := twigTagOpenStrict
+}
+
+StrictCraftTwig <: CraftTwig {
+  twigTag := twigTagStrict
+  twigTagOpen := twigTagOpenStrict
+}
+
+WithPlaceholderTwig <: Twig {
+  twigTagName := (letter | "█") (alnum | "_")*
+  variableSegment := (letter | "_" | "█") identifierCharacter*
+}
+
+WithPlaceholderTwigStatement <: TwigStatement {
+  twigTagName := (letter | "█") (alnum | "_")*
+  variableSegment := (letter | "_" | "█") identifierCharacter*
+}
+
+WithPlaceholderCraftTwig <: CraftTwig {
+  twigTagName := (letter | "█") (alnum | "_")*
+  variableSegment := (letter | "_" | "█") identifierCharacter*
+}

@@ -14,10 +14,10 @@ export interface Position {
 
 export enum NodeTypes {
   Document = 'Document',
-  LiquidRawTag = 'LiquidRawTag',
-  LiquidTag = 'LiquidTag',
-  LiquidBranch = 'LiquidBranch',
-  LiquidDrop = 'LiquidDrop',
+  TwigRawTag = 'TwigRawTag',
+  TwigTag = 'TwigTag',
+  TwigBranch = 'TwigBranch',
+  TwigDrop = 'TwigDrop',
   HtmlSelfClosingElement = 'HtmlSelfClosingElement',
   HtmlVoidElement = 'HtmlVoidElement',
   HtmlDoctype = 'HtmlDoctype',
@@ -33,10 +33,10 @@ export enum NodeTypes {
   TextNode = 'TextNode',
   YAMLFrontmatter = 'YAMLFrontmatter',
 
-  LiquidVariable = 'LiquidVariable',
-  LiquidFilter = 'LiquidFilter',
+  TwigVariable = 'TwigVariable',
+  TwigFilter = 'TwigFilter',
   NamedArgument = 'NamedArgument',
-  LiquidLiteral = 'LiquidLiteral',
+  TwigLiteral = 'TwigLiteral',
   String = 'String',
   Number = 'Number',
   Range = 'Range',
@@ -53,7 +53,7 @@ export enum NodeTypes {
   RenderVariableExpression = 'RenderVariableExpression',
 }
 
-export function isLiquidHtmlNode(value: any): value is LiquidHtmlNode {
+export function isCraftTwigNode(value: any): value is CraftTwigNode {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -78,7 +78,7 @@ export enum NamedTags {
   include = 'include',
   increment = 'increment',
   layout = 'layout',
-  liquid = 'liquid',
+  twig = 'twig',
   paginate = 'paginate',
   render = 'render',
   section = 'section',
@@ -108,28 +108,28 @@ export const HtmlNodeTypes = [
   NodeTypes.HtmlSelfClosingElement,
 ] as const;
 
-export const LiquidNodeTypes = [
-  NodeTypes.LiquidTag,
-  NodeTypes.LiquidDrop,
-  NodeTypes.LiquidBranch,
-  NodeTypes.LiquidRawTag,
+export const TwigNodeTypes = [
+  NodeTypes.TwigTag,
+  NodeTypes.TwigDrop,
+  NodeTypes.TwigBranch,
+  NodeTypes.TwigRawTag,
 ] as const;
 
-export type LiquidAstPath = AstPath<LiquidHtmlNode>;
-export type LiquidParserOptions = ParserOptions<LiquidHtmlNode> & {
+export type TwigAstPath = AstPath<CraftTwigNode>;
+export type TwigParserOptions = ParserOptions<CraftTwigNode> & {
   singleAttributePerLine: boolean;
   singleLineLinkTags: boolean;
   twigSingleQuote: boolean;
   embeddedSingleQuote: boolean;
   indentSchema: boolean;
 };
-export type LiquidPrinterArgs = {
+export type TwigPrinterArgs = {
   leadingSpaceGroupId?: symbol[] | symbol;
   trailingSpaceGroupId?: symbol[] | symbol;
-  isLiquidStatement?: boolean;
+  isTwigStatement?: boolean;
   truncate?: boolean;
 };
-export type LiquidPrinter = (path: AstPath<LiquidHtmlNode>, args?: LiquidPrinterArgs) => Doc;
+export type TwigPrinter = (path: AstPath<CraftTwigNode>, args?: TwigPrinterArgs) => Doc;
 
 // Those properties create loops that would make walking infinite
 export const nonTraversableProperties = new Set([
@@ -148,26 +148,26 @@ export const nonTraversableProperties = new Set([
 // of all the AST nodes that were augmented. So we use this neat little
 // trick that will surprise you:
 //
-// - If the property was   LiquidNode[],
-//   then we'll map it to  Augmented<LiquidNode>[];
+// - If the property was   TwigNode[],
+//   then we'll map it to  Augmented<TwigNode>[];
 //
 // - If the property was   (string | number)[],
 //   then we'll map it to  (string | number)[];
 //
-// - If the property was   string | LiquidNode,
-//   then we'll map it to  string | Augmented<LiquidNode>;
+// - If the property was   string | TwigNode,
+//   then we'll map it to  string | Augmented<TwigNode>;
 //
-// - If the property was   LiquidNode,
-//   then we'll map it to  Augmented<LiquidNode>;
+// - If the property was   TwigNode,
+//   then we'll map it to  Augmented<TwigNode>;
 //
 // - If the property was   string,
 //   then we'll map it to  string;
 //
-// So, Augmented<LiquidTag, WithParent> =>
-//  - LiquidTag with a parentNode,
-//  - LiquidTag.children all have a parentNode since LiquidTag.children is LiquidHtmlNode, then
-//  - LiquidTag.markup all have a parentNode since LiquidTag.markup may be LiquidTagAssignMarkup.
-//  - LiquidTag.name will remain a string
+// So, Augmented<TwigTag, WithParent> =>
+//  - TwigTag with a parentNode,
+//  - TwigTag.children all have a parentNode since TwigTag.children is CraftTwigNode, then
+//  - TwigTag.markup all have a parentNode since TwigTag.markup may be TwigTagAssignMarkup.
+//  - TwigTag.name will remain a string
 //
 // Topics to google to understand what's going on:
 //  - TypeScript generic types (for creating types from types)
@@ -179,13 +179,13 @@ export const nonTraversableProperties = new Set([
 export type Augmented<T, Aug> = {
   [Property in keyof T]: [T[Property]] extends [(infer Item)[] | undefined]
     // First branch: property?: Item[]
-    ? [Item] extends [AST.LiquidHtmlNode] // If *all* Item extend AST.LiquidHtmlNode
+    ? [Item] extends [AST.CraftTwigNode] // If *all* Item extend AST.CraftTwigNode
       ? Augmented<Item, Aug>[]            // If yes, => Augmented<Node>[]
       : Item[]                            // If not, => string[], number[], etc.
 
     // Second branch: property is NOT Item[]
     : T[Property] extends infer P    // T[Property] to distributed P alias
-      ? P extends AST.LiquidHtmlNode // Distribute if P extends AST.LiquidHtmlNode
+      ? P extends AST.CraftTwigNode // Distribute if P extends AST.CraftTwigNode
         ? Augmented<P, Aug>          // => If yes, => Augmented<Node>
         : P                          // => If not, => string, number, Position, etc.
       : never;
@@ -205,13 +205,13 @@ export type WithSiblings = {
   // We're cheating here by saying the prev/next will have all the props.
   // That's kind of a lie. But it would be too complicated to do this any
   // other way.
-  prev: LiquidHtmlNode | undefined;
-  next: LiquidHtmlNode | undefined;
+  prev: CraftTwigNode | undefined;
+  next: CraftTwigNode | undefined;
 };
 
 export type WithFamily = {
-  firstChild: LiquidHtmlNode | undefined;
-  lastChild: LiquidHtmlNode | undefined;
+  firstChild: CraftTwigNode | undefined;
+  lastChild: CraftTwigNode | undefined;
 };
 
 export type WithCssProperties = {
@@ -230,25 +230,25 @@ export type WithWhitespaceHelpers = {
   hasDanglingWhitespace: boolean;
 };
 
-export type AugmentedNode<Aug> = Augmented<AST.LiquidHtmlNode, Aug>;
+export type AugmentedNode<Aug> = Augmented<AST.CraftTwigNode, Aug>;
 
 export type Augment<Aug> = <NodeType extends AugmentedNode<Aug>>(
-  options: LiquidParserOptions,
+  options: TwigParserOptions,
   node: NodeType,
   parentNode?: NodeType,
 ) => void;
 
-export type LiquidHtmlNode = Augmented<AST.LiquidHtmlNode, AllAugmentations>;
+export type CraftTwigNode = Augmented<AST.CraftTwigNode, AllAugmentations>;
 export type DocumentNode = Augmented<AST.DocumentNode, AllAugmentations>;
-export type LiquidNode = Augmented<AST.LiquidNode, AllAugmentations>;
-export type LiquidStatement = Augmented<AST.LiquidStatement, AllAugmentations>;
+export type TwigNode = Augmented<AST.TwigNode, AllAugmentations>;
+export type TwigStatement = Augmented<AST.TwigStatement, AllAugmentations>;
 export type ParentNode = Augmented<AST.ParentNode, AllAugmentations>;
-export type LiquidRawTag = Augmented<AST.LiquidRawTag, AllAugmentations>;
-export type LiquidTag = Augmented<AST.LiquidTag, AllAugmentations>;
-export type LiquidTagNamed = Augmented<AST.LiquidTagNamed, AllAugmentations>;
-export type LiquidBranch = Augmented<AST.LiquidBranch, AllAugmentations>;
-export type LiquidBranchNamed = Augmented<AST.LiquidBranchNamed, AllAugmentations>;
-export type LiquidDrop = Augmented<AST.LiquidDrop, AllAugmentations>;
+export type TwigRawTag = Augmented<AST.TwigRawTag, AllAugmentations>;
+export type TwigTag = Augmented<AST.TwigTag, AllAugmentations>;
+export type TwigTagNamed = Augmented<AST.TwigTagNamed, AllAugmentations>;
+export type TwigBranch = Augmented<AST.TwigBranch, AllAugmentations>;
+export type TwigBranchNamed = Augmented<AST.TwigBranchNamed, AllAugmentations>;
+export type TwigDrop = Augmented<AST.TwigDrop, AllAugmentations>;
 export type HtmlNode = Augmented<AST.HtmlNode, AllAugmentations>;
 export type HtmlTag = Exclude<HtmlNode, HtmlComment>;
 export type HtmlElement = Augmented<AST.HtmlElement, AllAugmentations>;
@@ -264,5 +264,5 @@ export type AttrSingleQuoted = Augmented<AST.AttrSingleQuoted, AllAugmentations>
 export type AttrDoubleQuoted = Augmented<AST.AttrDoubleQuoted, AllAugmentations>;
 export type AttrUnquoted = Augmented<AST.AttrUnquoted, AllAugmentations>;
 export type AttrEmpty = Augmented<AST.AttrEmpty, AllAugmentations>;
-export type LiquidExpression = Augmented<AST.LiquidExpression, AllAugmentations>;
+export type TwigExpression = Augmented<AST.TwigExpression, AllAugmentations>;
 export type TextNode = Augmented<AST.TextNode, AllAugmentations>;

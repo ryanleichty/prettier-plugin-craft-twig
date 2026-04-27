@@ -44,7 +44,7 @@ export const CSS_DISPLAY_TAGS: Record<string, string> = {
   optgroup: 'block',
 };
 
-export const CSS_DISPLAY_LIQUID_TAGS: Record<string, string> = {
+export const CSS_DISPLAY_TWIG_TAGS: Record<string, string> = {
   // control flow tags
   if: 'inline',
   unless: 'inline',
@@ -66,7 +66,7 @@ export const CSS_DISPLAY_LIQUID_TAGS: Record<string, string> = {
   echo: 'inline',
   form: 'block',
   layout: 'none',
-  liquid: 'inline',
+  twig: 'inline',
   paginate: 'inline',
   raw: 'inline',
   render: 'inline',
@@ -81,14 +81,13 @@ export const CSS_DISPLAY_LIQUID_TAGS: Record<string, string> = {
   decrement: 'inline',
 };
 
-export const CSS_DISPLAY_LIQUID_DEFAULT = 'inline';
+export const CSS_DISPLAY_TWIG_DEFAULT = 'inline';
 
 export const CSS_DISPLAY_DEFAULT = 'inline';
-export const CSS_WHITE_SPACE_TAGS: Record<string, string> =
-  getCssStyleTags('white-space');
+export const CSS_WHITE_SPACE_TAGS: Record<string, string> = getCssStyleTags('white-space');
 export const CSS_WHITE_SPACE_DEFAULT = 'normal';
 
-export const CSS_WHITE_SPACE_LIQUID_TAGS: Record<string, string> = {
+export const CSS_WHITE_SPACE_TWIG_TAGS: Record<string, string> = {
   capture: 'pre',
   raw: 'pre',
 };

@@ -5,7 +5,7 @@
  *   Source code: string
  *
  * Output:
- *   Concrete Syntax Tree (CST): LiquidHtmlCST
+ *   Concrete Syntax Tree (CST): CraftTwigCST
  *
  * We use OhmJS's toAST method to turn the OhmJS nodes into an "almost-AST." We
  * call that a Concrete Syntax Tree because it considers Open and Close nodes as
@@ -17,13 +17,13 @@
  * {% if cond %}hi <em>there!</em>{% endif %}
  *
  * becomes
- * - LiquidTagOpen/if
- *   condition: LiquidVariableExpression/cond
+ * - TwigTagOpen/if
+ *   condition: TwigVariableExpression/cond
  * - TextNode/"hi "
  * - HtmlTagOpen/em
  * - TextNode/"there!"
  * - HtmlTagClose/em
- * - LiquidTagClose/if
+ * - TwigTagClose/if
  *
  * In the Concrete Syntax Tree, all nodes are siblings instead of having a
  * parent/children relationship.
@@ -34,12 +34,12 @@ import { Parser } from 'prettier';
 import ohm, { Node } from 'ohm-js';
 import { toAST } from 'ohm-js/extras';
 import {
-  LiquidGrammars,
+  TwigGrammars,
   placeholderGrammars,
   strictGrammars,
   tolerantGrammars,
 } from '~/parser/grammar';
-import { LiquidHTMLCSTParsingError } from '~/parser/errors';
+import { CraftTwigCSTParsingError } from '~/parser/errors';
 import { Comparators, NamedTags } from '~/types';
 
 export enum ConcreteNodeTypes {
@@ -54,20 +54,20 @@ export enum ConcreteNodeTypes {
   AttrDoubleQuoted = 'AttrDoubleQuoted',
   AttrUnquoted = 'AttrUnquoted',
   AttrEmpty = 'AttrEmpty',
-  LiquidDrop = 'LiquidDrop',
-  LiquidRawTag = 'LiquidRawTag',
-  LiquidTag = 'LiquidTag',
-  LiquidTagOpen = 'LiquidTagOpen',
-  LiquidTagClose = 'LiquidTagClose',
+  TwigDrop = 'TwigDrop',
+  TwigRawTag = 'TwigRawTag',
+  TwigTag = 'TwigTag',
+  TwigTagOpen = 'TwigTagOpen',
+  TwigTagClose = 'TwigTagClose',
   TwigCommentOpen = 'TwigCommentOpen',
   TwigCommentClose = 'TwigCommentClose',
   TextNode = 'TextNode',
   YAMLFrontmatter = 'YAMLFrontmatter',
 
-  LiquidVariable = 'LiquidVariable',
-  LiquidFilter = 'LiquidFilter',
+  TwigVariable = 'TwigVariable',
+  TwigFilter = 'TwigFilter',
   NamedArgument = 'NamedArgument',
-  LiquidLiteral = 'LiquidLiteral',
+  TwigLiteral = 'TwigLiteral',
   VariableLookup = 'VariableLookup',
   String = 'String',
   Number = 'Number',
@@ -83,7 +83,7 @@ export enum ConcreteNodeTypes {
   RenderVariableExpression = 'RenderVariableExpression',
 }
 
-export const LiquidLiteralValues = {
+export const TwigLiteralValues = {
   nil: null,
   null: null,
   true: true as true,
@@ -129,22 +129,22 @@ export interface ConcreteHtmlVoidElement
 }
 export interface ConcreteHtmlSelfClosingElement
   extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlSelfClosingElement> {
-  name: (ConcreteTextNode | ConcreteLiquidDrop)[];
+  name: (ConcreteTextNode | ConcreteTwigDrop)[];
 }
 export interface ConcreteHtmlTagOpen extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlTagOpen> {
-  name: (ConcreteTextNode | ConcreteLiquidDrop)[];
+  name: (ConcreteTextNode | ConcreteTwigDrop)[];
 }
 export interface ConcreteHtmlTagClose extends ConcreteHtmlNodeBase<ConcreteNodeTypes.HtmlTagClose> {
-  name: (ConcreteTextNode | ConcreteLiquidDrop)[];
+  name: (ConcreteTextNode | ConcreteTwigDrop)[];
 }
 
 export interface ConcreteAttributeNodeBase<T> extends ConcreteBasicNode<T> {
-  name: (ConcreteLiquidDrop | ConcreteTextNode)[];
-  value: (ConcreteLiquidNode | ConcreteTextNode)[];
+  name: (ConcreteTwigDrop | ConcreteTextNode)[];
+  value: (ConcreteTwigNode | ConcreteTextNode)[];
 }
 
 export type ConcreteAttributeNode =
-  | ConcreteLiquidNode
+  | ConcreteTwigNode
   | ConcreteAttrSingleQuoted
   | ConcreteAttrDoubleQuoted
   | ConcreteAttrUnquoted
@@ -157,23 +157,22 @@ export interface ConcreteAttrDoubleQuoted
 export interface ConcreteAttrUnquoted
   extends ConcreteAttributeNodeBase<ConcreteNodeTypes.AttrUnquoted> {}
 export interface ConcreteAttrEmpty extends ConcreteBasicNode<ConcreteNodeTypes.AttrEmpty> {
-  name: (ConcreteLiquidDrop | ConcreteTextNode)[];
+  name: (ConcreteTwigDrop | ConcreteTextNode)[];
 }
 
-export type ConcreteLiquidNode =
-  | ConcreteLiquidRawTag
-  | ConcreteLiquidTagOpen
-  | ConcreteLiquidTagClose
-  | ConcreteLiquidTag
-  | ConcreteLiquidDrop;
+export type ConcreteTwigNode =
+  | ConcreteTwigRawTag
+  | ConcreteTwigTagOpen
+  | ConcreteTwigTagClose
+  | ConcreteTwigTag
+  | ConcreteTwigDrop;
 
-interface ConcreteBasicLiquidNode<T> extends ConcreteBasicNode<T> {
+interface ConcreteBasicTwigNode<T> extends ConcreteBasicNode<T> {
   whitespaceStart: null | '-';
   whitespaceEnd: null | '-';
 }
 
-export interface ConcreteLiquidRawTag
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidRawTag> {
+export interface ConcreteTwigRawTag extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigRawTag> {
   name: string;
   body: string;
   markup: string;
@@ -185,197 +184,196 @@ export interface ConcreteLiquidRawTag
   blockEndLocEnd: number;
 }
 
-export type ConcreteLiquidTagOpen = ConcreteLiquidTagOpenBaseCase | ConcreteLiquidTagOpenNamed;
-export type ConcreteLiquidTagOpenNamed =
-  | ConcreteLiquidTagOpenCapture
-  | ConcreteLiquidTagOpenSet
-  | ConcreteLiquidTagOpenIf
-  | ConcreteLiquidTagOpenUnless
-  | ConcreteLiquidTagOpenForm
-  | ConcreteLiquidTagOpenFor
-  | ConcreteLiquidTagOpenPaginate
-  | ConcreteLiquidTagOpenSwitch
-  | ConcreteLiquidTagOpenTablerow;
+export type ConcreteTwigTagOpen = ConcreteTwigTagOpenBaseCase | ConcreteTwigTagOpenNamed;
+export type ConcreteTwigTagOpenNamed =
+  | ConcreteTwigTagOpenCapture
+  | ConcreteTwigTagOpenSet
+  | ConcreteTwigTagOpenIf
+  | ConcreteTwigTagOpenUnless
+  | ConcreteTwigTagOpenForm
+  | ConcreteTwigTagOpenFor
+  | ConcreteTwigTagOpenPaginate
+  | ConcreteTwigTagOpenSwitch
+  | ConcreteTwigTagOpenTablerow;
 
-export interface ConcreteLiquidTagOpenNode<Name, Markup>
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidTagOpen> {
+export interface ConcreteTwigTagOpenNode<Name, Markup>
+  extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTagOpen> {
   name: Name;
   markup: Markup;
 }
 
-export interface ConcreteLiquidTagOpenBaseCase extends ConcreteLiquidTagOpenNode<string, string> {}
+export interface ConcreteTwigTagOpenBaseCase extends ConcreteTwigTagOpenNode<string, string> {}
 
-export interface ConcreteLiquidTagOpenCapture
-  extends ConcreteLiquidTagOpenNode<NamedTags.capture, ConcreteLiquidVariableLookup> {}
-export interface ConcreteLiquidTagOpenSet
-  extends ConcreteLiquidTagOpenNode<NamedTags.set, ConcreteLiquidVariableLookup> {}
+export interface ConcreteTwigTagOpenCapture
+  extends ConcreteTwigTagOpenNode<NamedTags.capture, ConcreteTwigVariableLookup> {}
+export interface ConcreteTwigTagOpenSet
+  extends ConcreteTwigTagOpenNode<NamedTags.set, ConcreteTwigVariableLookup> {}
 
-export interface ConcreteLiquidTagOpenSwitch
-  extends ConcreteLiquidTagOpenNode<NamedTags.switch, ConcreteLiquidExpression> {}
-export interface ConcreteLiquidTagCase
-  extends ConcreteLiquidTagNode<NamedTags.case, ConcreteLiquidExpression> {}
+export interface ConcreteTwigTagOpenSwitch
+  extends ConcreteTwigTagOpenNode<NamedTags.switch, ConcreteTwigExpression> {}
+export interface ConcreteTwigTagCase
+  extends ConcreteTwigTagNode<NamedTags.case, ConcreteTwigExpression> {}
 
-export interface ConcreteLiquidTagOpenIf
-  extends ConcreteLiquidTagOpenNode<NamedTags.if, ConcreteLiquidCondition[]> {}
-export interface ConcreteLiquidTagOpenUnless
-  extends ConcreteLiquidTagOpenNode<NamedTags.unless, ConcreteLiquidCondition[]> {}
-export interface ConcreteLiquidTagElseif
-  extends ConcreteLiquidTagNode<NamedTags.elseif, ConcreteLiquidCondition[]> {}
-export interface ConcreteLiquidTagElsif
-  extends ConcreteLiquidTagNode<NamedTags.elsif, ConcreteLiquidCondition[]> {}
+export interface ConcreteTwigTagOpenIf
+  extends ConcreteTwigTagOpenNode<NamedTags.if, ConcreteTwigCondition[]> {}
+export interface ConcreteTwigTagOpenUnless
+  extends ConcreteTwigTagOpenNode<NamedTags.unless, ConcreteTwigCondition[]> {}
+export interface ConcreteTwigTagElseif
+  extends ConcreteTwigTagNode<NamedTags.elseif, ConcreteTwigCondition[]> {}
+export interface ConcreteTwigTagElsif
+  extends ConcreteTwigTagNode<NamedTags.elsif, ConcreteTwigCondition[]> {}
 
-export interface ConcreteLiquidCondition extends ConcreteBasicNode<ConcreteNodeTypes.Condition> {
+export interface ConcreteTwigCondition extends ConcreteBasicNode<ConcreteNodeTypes.Condition> {
   relation: 'and' | 'or' | null;
-  expression: ConcreteLiquidComparison | ConcreteLiquidExpression;
+  expression: ConcreteTwigComparison | ConcreteTwigExpression;
 }
 
-export interface ConcreteLiquidComparison extends ConcreteBasicNode<ConcreteNodeTypes.Comparison> {
+export interface ConcreteTwigComparison extends ConcreteBasicNode<ConcreteNodeTypes.Comparison> {
   comparator: Comparators;
-  left: ConcreteLiquidExpression;
-  right: ConcreteLiquidExpression;
+  left: ConcreteTwigExpression;
+  right: ConcreteTwigExpression;
 }
 
-export interface ConcreteLiquidTagOpenForm
-  extends ConcreteLiquidTagOpenNode<NamedTags.form, ConcreteLiquidArgument[]> {}
+export interface ConcreteTwigTagOpenForm
+  extends ConcreteTwigTagOpenNode<NamedTags.form, ConcreteTwigArgument[]> {}
 
-export interface ConcreteLiquidTagOpenFor
-  extends ConcreteLiquidTagOpenNode<NamedTags.for, ConcreteLiquidTagForMarkup> {}
-export interface ConcreteLiquidTagForMarkup extends ConcreteBasicNode<ConcreteNodeTypes.ForMarkup> {
+export interface ConcreteTwigTagOpenFor
+  extends ConcreteTwigTagOpenNode<NamedTags.for, ConcreteTwigTagForMarkup> {}
+export interface ConcreteTwigTagForMarkup extends ConcreteBasicNode<ConcreteNodeTypes.ForMarkup> {
   variableName: string;
-  collection: ConcreteLiquidExpression;
+  collection: ConcreteTwigExpression;
   reversed: 'reversed' | null;
-  args: ConcreteLiquidNamedArgument[];
+  args: ConcreteTwigNamedArgument[];
 }
 
-export interface ConcreteLiquidTagOpenTablerow
-  extends ConcreteLiquidTagOpenNode<NamedTags.tablerow, ConcreteLiquidTagForMarkup> {}
+export interface ConcreteTwigTagOpenTablerow
+  extends ConcreteTwigTagOpenNode<NamedTags.tablerow, ConcreteTwigTagForMarkup> {}
 
-export interface ConcreteLiquidTagOpenPaginate
-  extends ConcreteLiquidTagOpenNode<NamedTags.paginate, ConcretePaginateMarkup> {}
+export interface ConcreteTwigTagOpenPaginate
+  extends ConcreteTwigTagOpenNode<NamedTags.paginate, ConcretePaginateMarkup> {}
 
 export interface ConcretePaginateMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.PaginateMarkup> {
-  collection: ConcreteLiquidExpression;
-  pageSize: ConcreteLiquidExpression;
-  args: ConcreteLiquidNamedArgument[] | null;
+  collection: ConcreteTwigExpression;
+  pageSize: ConcreteTwigExpression;
+  args: ConcreteTwigNamedArgument[] | null;
 }
 
-export interface ConcreteLiquidTagClose
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidTagClose> {
+export interface ConcreteTwigTagClose
+  extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTagClose> {
   name: string;
 }
 
-export type ConcreteLiquidTag = ConcreteLiquidTagNamed | ConcreteLiquidTagBaseCase;
-export type ConcreteLiquidTagNamed =
-  | ConcreteLiquidTagAssign
-  | ConcreteLiquidTagCase
-  | ConcreteLiquidTagCycle
-  | ConcreteLiquidTagEcho
-  | ConcreteLiquidTagIncrement
-  | ConcreteLiquidTagDecrement
-  | ConcreteLiquidTagElseif
-  | ConcreteLiquidTagElsif
-  | ConcreteLiquidTagInclude
-  | ConcreteLiquidTagLayout
-  | ConcreteLiquidTagLiquid
-  | ConcreteLiquidTagRender
-  | ConcreteLiquidTagSection
-  | ConcreteLiquidTagSections;
+export type ConcreteTwigTag = ConcreteTwigTagNamed | ConcreteTwigTagBaseCase;
+export type ConcreteTwigTagNamed =
+  | ConcreteTwigTagAssign
+  | ConcreteTwigTagCase
+  | ConcreteTwigTagCycle
+  | ConcreteTwigTagEcho
+  | ConcreteTwigTagIncrement
+  | ConcreteTwigTagDecrement
+  | ConcreteTwigTagElseif
+  | ConcreteTwigTagElsif
+  | ConcreteTwigTagInclude
+  | ConcreteTwigTagLayout
+  | ConcreteTwigTagTwig
+  | ConcreteTwigTagRender
+  | ConcreteTwigTagSection
+  | ConcreteTwigTagSections;
 
-export interface ConcreteLiquidTagNode<Name, Markup>
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidTag> {
+export interface ConcreteTwigTagNode<Name, Markup>
+  extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigTag> {
   markup: Markup;
   name: Name;
 }
 
-export interface ConcreteLiquidTagBaseCase extends ConcreteLiquidTagNode<string, string> {}
-export interface ConcreteLiquidTagEcho
-  extends ConcreteLiquidTagNode<NamedTags.echo, ConcreteLiquidVariable> {}
-export interface ConcreteLiquidTagIncrement
-  extends ConcreteLiquidTagNode<NamedTags.increment, ConcreteLiquidVariableLookup> {}
-export interface ConcreteLiquidTagDecrement
-  extends ConcreteLiquidTagNode<NamedTags.decrement, ConcreteLiquidVariableLookup> {}
-export interface ConcreteLiquidTagSection
-  extends ConcreteLiquidTagNode<NamedTags.section, ConcreteStringLiteral> {}
-export interface ConcreteLiquidTagSections
-  extends ConcreteLiquidTagNode<NamedTags.sections, ConcreteStringLiteral> {}
-export interface ConcreteLiquidTagLayout
-  extends ConcreteLiquidTagNode<NamedTags.layout, ConcreteLiquidExpression> {}
+export interface ConcreteTwigTagBaseCase extends ConcreteTwigTagNode<string, string> {}
+export interface ConcreteTwigTagEcho
+  extends ConcreteTwigTagNode<NamedTags.echo, ConcreteTwigVariable> {}
+export interface ConcreteTwigTagIncrement
+  extends ConcreteTwigTagNode<NamedTags.increment, ConcreteTwigVariableLookup> {}
+export interface ConcreteTwigTagDecrement
+  extends ConcreteTwigTagNode<NamedTags.decrement, ConcreteTwigVariableLookup> {}
+export interface ConcreteTwigTagSection
+  extends ConcreteTwigTagNode<NamedTags.section, ConcreteStringLiteral> {}
+export interface ConcreteTwigTagSections
+  extends ConcreteTwigTagNode<NamedTags.sections, ConcreteStringLiteral> {}
+export interface ConcreteTwigTagLayout
+  extends ConcreteTwigTagNode<NamedTags.layout, ConcreteTwigExpression> {}
 
-export interface ConcreteLiquidTagLiquid
-  extends ConcreteLiquidTagNode<NamedTags.liquid, ConcreteLiquidLiquidTagNode[]> {}
-export type ConcreteLiquidLiquidTagNode =
-  | ConcreteLiquidTagOpen
-  | ConcreteLiquidTagClose
-  | ConcreteLiquidTag
-  | ConcreteLiquidRawTag;
+export interface ConcreteTwigTagTwig
+  extends ConcreteTwigTagNode<NamedTags.twig, ConcreteTwigTwigTagNode[]> {}
+export type ConcreteTwigTwigTagNode =
+  | ConcreteTwigTagOpen
+  | ConcreteTwigTagClose
+  | ConcreteTwigTag
+  | ConcreteTwigRawTag;
 
-export interface ConcreteLiquidTagAssign
-  extends ConcreteLiquidTagNode<NamedTags.assign, ConcreteLiquidTagAssignMarkup> {}
-export interface ConcreteLiquidTagAssignMarkup
+export interface ConcreteTwigTagAssign
+  extends ConcreteTwigTagNode<NamedTags.assign, ConcreteTwigTagAssignMarkup> {}
+export interface ConcreteTwigTagAssignMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.AssignMarkup> {
   name: string;
-  value: ConcreteLiquidVariable;
+  value: ConcreteTwigVariable;
 }
 
-export interface ConcreteLiquidTagCycle
-  extends ConcreteLiquidTagNode<NamedTags.cycle, ConcreteLiquidTagCycleMarkup> {}
-export interface ConcreteLiquidTagCycleMarkup
+export interface ConcreteTwigTagCycle
+  extends ConcreteTwigTagNode<NamedTags.cycle, ConcreteTwigTagCycleMarkup> {}
+export interface ConcreteTwigTagCycleMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.CycleMarkup> {
-  groupName: ConcreteLiquidExpression | null;
-  args: ConcreteLiquidExpression[];
+  groupName: ConcreteTwigExpression | null;
+  args: ConcreteTwigExpression[];
 }
 
-export interface ConcreteLiquidTagRender
-  extends ConcreteLiquidTagNode<NamedTags.render, ConcreteLiquidTagRenderMarkup> {}
-export interface ConcreteLiquidTagInclude
-  extends ConcreteLiquidTagNode<NamedTags.include, ConcreteLiquidTagRenderMarkup> {}
+export interface ConcreteTwigTagRender
+  extends ConcreteTwigTagNode<NamedTags.render, ConcreteTwigTagRenderMarkup> {}
+export interface ConcreteTwigTagInclude
+  extends ConcreteTwigTagNode<NamedTags.include, ConcreteTwigTagRenderMarkup> {}
 
-export interface ConcreteLiquidTagRenderMarkup
+export interface ConcreteTwigTagRenderMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.RenderMarkup> {
-  snippet: ConcreteStringLiteral | ConcreteLiquidVariableLookup;
+  snippet: ConcreteStringLiteral | ConcreteTwigVariableLookup;
   alias: string | null;
   variable: ConcreteRenderVariableExpression | null;
-  args: ConcreteLiquidNamedArgument[];
+  args: ConcreteTwigNamedArgument[];
 }
 
 export interface ConcreteRenderVariableExpression
   extends ConcreteBasicNode<ConcreteNodeTypes.RenderVariableExpression> {
   kind: 'for' | 'with';
-  name: ConcreteLiquidExpression;
+  name: ConcreteTwigExpression;
 }
 
-export interface ConcreteLiquidDrop extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidDrop> {
-  markup: ConcreteLiquidVariable | string;
+export interface ConcreteTwigDrop extends ConcreteBasicTwigNode<ConcreteNodeTypes.TwigDrop> {
+  markup: ConcreteTwigVariable | string;
 }
 
-// The variable is the name + filters, like shopify/liquid.
-export interface ConcreteLiquidVariable
-  extends ConcreteBasicNode<ConcreteNodeTypes.LiquidVariable> {
-  expression: ConcreteLiquidExpression;
-  filters: ConcreteLiquidFilter[];
+// The variable is the name + filters, like shopify/twig.
+export interface ConcreteTwigVariable extends ConcreteBasicNode<ConcreteNodeTypes.TwigVariable> {
+  expression: ConcreteTwigExpression;
+  filters: ConcreteTwigFilter[];
   rawSource: string;
 }
 
-export interface ConcreteLiquidFilter extends ConcreteBasicNode<ConcreteNodeTypes.LiquidFilter> {
+export interface ConcreteTwigFilter extends ConcreteBasicNode<ConcreteNodeTypes.TwigFilter> {
   name: string;
-  args: ConcreteLiquidArgument[];
+  args: ConcreteTwigArgument[];
 }
 
-export type ConcreteLiquidArgument = ConcreteLiquidExpression | ConcreteLiquidNamedArgument;
+export type ConcreteTwigArgument = ConcreteTwigExpression | ConcreteTwigNamedArgument;
 
-export interface ConcreteLiquidNamedArgument
+export interface ConcreteTwigNamedArgument
   extends ConcreteBasicNode<ConcreteNodeTypes.NamedArgument> {
   name: string;
-  value: ConcreteLiquidExpression;
+  value: ConcreteTwigExpression;
 }
 
-export type ConcreteLiquidExpression =
+export type ConcreteTwigExpression =
   | ConcreteStringLiteral
   | ConcreteNumberLiteral
-  | ConcreteLiquidLiteral
-  | ConcreteLiquidRange
-  | ConcreteLiquidVariableLookup;
+  | ConcreteTwigLiteral
+  | ConcreteTwigRange
+  | ConcreteTwigVariableLookup;
 
 export interface ConcreteStringLiteral extends ConcreteBasicNode<ConcreteNodeTypes.String> {
   value: string;
@@ -386,20 +384,20 @@ export interface ConcreteNumberLiteral extends ConcreteBasicNode<ConcreteNodeTyp
   value: string; // float parsing is weird but supported
 }
 
-export interface ConcreteLiquidLiteral extends ConcreteBasicNode<ConcreteNodeTypes.LiquidLiteral> {
-  keyword: keyof typeof LiquidLiteralValues;
-  value: (typeof LiquidLiteralValues)[keyof typeof LiquidLiteralValues];
+export interface ConcreteTwigLiteral extends ConcreteBasicNode<ConcreteNodeTypes.TwigLiteral> {
+  keyword: keyof typeof TwigLiteralValues;
+  value: (typeof TwigLiteralValues)[keyof typeof TwigLiteralValues];
 }
 
-export interface ConcreteLiquidRange extends ConcreteBasicNode<ConcreteNodeTypes.Range> {
-  start: ConcreteLiquidExpression;
-  end: ConcreteLiquidExpression;
+export interface ConcreteTwigRange extends ConcreteBasicNode<ConcreteNodeTypes.Range> {
+  start: ConcreteTwigExpression;
+  end: ConcreteTwigExpression;
 }
 
-export interface ConcreteLiquidVariableLookup
+export interface ConcreteTwigVariableLookup
   extends ConcreteBasicNode<ConcreteNodeTypes.VariableLookup> {
   name: string | null;
-  lookups: ConcreteLiquidExpression[];
+  lookups: ConcreteTwigExpression[];
 }
 
 export type ConcreteHtmlNode =
@@ -420,20 +418,17 @@ export interface ConcreteYamlFrontmatterNode
   body: string;
 }
 
-export type LiquidHtmlConcreteNode =
+export type CraftTwigConcreteNode =
   | ConcreteHtmlNode
-  | ConcreteLiquidNode
+  | ConcreteTwigNode
   | ConcreteTextNode
   | ConcreteYamlFrontmatterNode;
 
-export type LiquidConcreteNode =
-  | ConcreteLiquidNode
-  | ConcreteTextNode
-  | ConcreteYamlFrontmatterNode;
+export type TwigConcreteNode = ConcreteTwigNode | ConcreteTextNode | ConcreteYamlFrontmatterNode;
 
-export type LiquidHtmlCST = LiquidHtmlConcreteNode[];
+export type CraftTwigCST = CraftTwigConcreteNode[];
 
-export type LiquidCST = LiquidConcreteNode[];
+export type TwigCST = TwigConcreteNode[];
 
 interface Mapping {
   [k: string]: number | TemplateMapping | TopLevelFunctionMapping;
@@ -455,7 +450,7 @@ const markupTrimEnd = (i: number) => (tokens: Node[]) => tokens[i].sourceString.
 
 export interface CSTBuildOptions {
   /**
-   * 'strict' will disable the Liquid parsing base cases. Which means that we will
+   * 'strict' will disable the Twig parsing base cases. Which means that we will
    * throw an error if we can't parse the node `markup` properly.
    *
    * 'tolerant' is the default case so that prettier can pretty print nodes
@@ -464,48 +459,43 @@ export interface CSTBuildOptions {
   mode: 'strict' | 'tolerant' | 'completion';
 }
 
-const Grammars: Record<CSTBuildOptions['mode'], LiquidGrammars> = {
+const Grammars: Record<CSTBuildOptions['mode'], TwigGrammars> = {
   strict: strictGrammars,
   tolerant: tolerantGrammars,
   completion: placeholderGrammars,
 };
 
-export function toLiquidHtmlCST(
+export function toCraftTwigCST(
   source: string,
   options: CSTBuildOptions = { mode: 'tolerant' },
-): LiquidHtmlCST {
+): CraftTwigCST {
   const grammars = Grammars[options.mode];
-  const grammar = grammars.LiquidHTML;
-  return toCST(source, grammars, grammar, [
-    'HelperMappings',
-    'LiquidMappings',
-    'LiquidHTMLMappings',
-  ]);
+  const grammar = grammars.CraftTwig;
+  return toCST(source, grammars, grammar, ['HelperMappings', 'TwigMappings', 'CraftTwigMappings']);
 }
 
-export function toLiquidCST(
+export function toTwigCST(
   source: string,
   options: CSTBuildOptions = { mode: 'tolerant' },
-): LiquidCST {
+): TwigCST {
   const grammars = Grammars[options.mode];
-  const grammar = grammars.Liquid;
-  return toCST(source, grammars, grammar, ['HelperMappings', 'LiquidMappings']);
+  const grammar = grammars.Twig;
+  return toCST(source, grammars, grammar, ['HelperMappings', 'TwigMappings']);
 }
 
 function toCST<T>(
   source: string,
-  grammars: LiquidGrammars,
+  grammars: TwigGrammars,
   grammar: ohm.Grammar,
-  cstMappings: ('HelperMappings' | 'LiquidMappings' | 'LiquidHTMLMappings')[],
+  cstMappings: ('HelperMappings' | 'TwigMappings' | 'CraftTwigMappings')[],
 ): T {
   // When we switch parser, our locStart and locEnd functions must account
-  // for the offset of the {% liquid %} markup
-  let liquidStatementOffset = 0;
-  const locStart = (tokens: Node[]) => liquidStatementOffset + tokens[0].source.startIdx;
-  const locEnd = (tokens: Node[]) =>
-    liquidStatementOffset + tokens[tokens.length - 1].source.endIdx;
+  // for the offset of the {% twig %} markup
+  let twigStatementOffset = 0;
+  const locStart = (tokens: Node[]) => twigStatementOffset + tokens[0].source.startIdx;
+  const locEnd = (tokens: Node[]) => twigStatementOffset + tokens[tokens.length - 1].source.endIdx;
   const locEndSecondToLast = (tokens: Node[]) =>
-    liquidStatementOffset + tokens[tokens.length - 2].source.endIdx;
+    twigStatementOffset + tokens[tokens.length - 2].source.endIdx;
 
   const textNode = {
     type: ConcreteNodeTypes.TextNode,
@@ -519,7 +509,7 @@ function toCST<T>(
 
   const res = grammar.match(source, 'Node');
   if (res.failed()) {
-    throw new LiquidHTMLCSTParsingError(res);
+    throw new CraftTwigCSTParsingError(res);
   }
 
   const HelperMappings: Mapping = {
@@ -544,11 +534,11 @@ function toCST<T>(
     },
   };
 
-  const LiquidMappings: Mapping = {
-    liquidNode: 0,
-    liquidRawTag: 0,
-    liquidRawTagImpl: {
-      type: ConcreteNodeTypes.LiquidRawTag,
+  const TwigMappings: Mapping = {
+    twigNode: 0,
+    twigRawTag: 0,
+    twigRawTagImpl: {
+      type: ConcreteNodeTypes.TwigRawTag,
       name: 3,
       body: 9,
       markup: 6,
@@ -564,8 +554,8 @@ function toCST<T>(
       blockEndLocStart: (tokens: Node[]) => tokens[10].source.startIdx,
       blockEndLocEnd: (tokens: Node[]) => tokens[18].source.endIdx,
     },
-    liquidBlockComment: {
-      type: ConcreteNodeTypes.LiquidRawTag,
+    twigBlockComment: {
+      type: ConcreteNodeTypes.TwigRawTag,
       name: 'comment',
       body: (tokens: Node[]) => tokens[1].sourceString,
       whitespaceStart: (tokens: Node[]) => tokens[0].children[1].sourceString,
@@ -580,8 +570,8 @@ function toCST<T>(
       blockEndLocStart: (tokens: Node[]) => tokens[2].source.startIdx,
       blockEndLocEnd: (tokens: Node[]) => tokens[2].source.endIdx,
     },
-    liquidInlineComment: {
-      type: ConcreteNodeTypes.LiquidTag,
+    twigInlineComment: {
+      type: ConcreteNodeTypes.TwigTag,
       name: 'twig',
       markup: markupTrimEnd(3),
       whitespaceStart: 1,
@@ -591,11 +581,11 @@ function toCST<T>(
       source,
     },
 
-    liquidTagOpen: 0,
-    liquidTagOpenStrict: 0,
-    liquidTagOpenBaseCase: 0,
-    liquidTagOpenRule: {
-      type: ConcreteNodeTypes.LiquidTagOpen,
+    twigTagOpen: 0,
+    twigTagOpenStrict: 0,
+    twigTagOpenBaseCase: 0,
+    twigTagOpenRule: {
+      type: ConcreteNodeTypes.TwigTagOpen,
       name: 3,
       markup(nodes: Node[]) {
         const markupNode = nodes[6];
@@ -612,12 +602,12 @@ function toCST<T>(
       source,
     },
 
-    liquidTagOpenCapture: 0,
-    liquidTagOpenSet: 0,
-    liquidTagOpenForm: 0,
-    liquidTagOpenFormMarkup: 0,
-    liquidTagOpenFor: 0,
-    liquidTagOpenForMarkup: {
+    twigTagOpenCapture: 0,
+    twigTagOpenSet: 0,
+    twigTagOpenForm: 0,
+    twigTagOpenFormMarkup: 0,
+    twigTagOpenFor: 0,
+    twigTagOpenForMarkup: {
       type: ConcreteNodeTypes.ForMarkup,
       variableName: 0,
       collection: 4,
@@ -627,11 +617,11 @@ function toCST<T>(
       locEnd,
       source,
     },
-    liquidTagBreak: 0,
-    liquidTagContinue: 0,
-    liquidTagOpenTablerow: 0,
-    liquidTagOpenPaginate: 0,
-    liquidTagOpenPaginateMarkup: {
+    twigTagBreak: 0,
+    twigTagContinue: 0,
+    twigTagOpenTablerow: 0,
+    twigTagOpenPaginate: 0,
+    twigTagOpenPaginateMarkup: {
       type: ConcreteNodeTypes.PaginateMarkup,
       collection: 0,
       pageSize: 4,
@@ -640,17 +630,17 @@ function toCST<T>(
       locEnd,
       source,
     },
-    liquidTagOpenSwitch: 0,
-    liquidTagOpenSwitchMarkup: 0,
-    liquidTagCase: 0,
-    liquidTagCaseMarkup: 0,
-    liquidTagDefault: 0,
-    liquidTagOpenIf: 0,
-    liquidTagOpenUnless: 0,
-    liquidTagElseif: 0,
-    liquidTagElsif: 0,
-    liquidTagElse: 0,
-    liquidTagOpenConditionalMarkup: 0,
+    twigTagOpenSwitch: 0,
+    twigTagOpenSwitchMarkup: 0,
+    twigTagCase: 0,
+    twigTagCaseMarkup: 0,
+    twigTagDefault: 0,
+    twigTagOpenIf: 0,
+    twigTagOpenUnless: 0,
+    twigTagElseif: 0,
+    twigTagElsif: 0,
+    twigTagElse: 0,
+    twigTagOpenConditionalMarkup: 0,
     condition: {
       type: ConcreteNodeTypes.Condition,
       relation: 0,
@@ -669,8 +659,8 @@ function toCST<T>(
       source,
     },
 
-    liquidTagClose: {
-      type: ConcreteNodeTypes.LiquidTagClose,
+    twigTagClose: {
+      type: ConcreteNodeTypes.TwigTagClose,
       name: 4,
       whitespaceStart: 1,
       whitespaceEnd: 7,
@@ -679,21 +669,21 @@ function toCST<T>(
       source,
     },
 
-    liquidTag: 0,
-    liquidTagStrict: 0,
-    liquidTagBaseCase: 0,
-    liquidTagAssign: 0,
-    liquidTagEcho: 0,
-    liquidTagCycle: 0,
-    liquidTagIncrement: 0,
-    liquidTagDecrement: 0,
-    liquidTagRender: 0,
-    liquidTagInclude: 0,
-    liquidTagSection: 0,
-    liquidTagSections: 0,
-    liquidTagLayout: 0,
-    liquidTagRule: {
-      type: ConcreteNodeTypes.LiquidTag,
+    twigTag: 0,
+    twigTagStrict: 0,
+    twigTagBaseCase: 0,
+    twigTagAssign: 0,
+    twigTagEcho: 0,
+    twigTagCycle: 0,
+    twigTagIncrement: 0,
+    twigTagDecrement: 0,
+    twigTagRender: 0,
+    twigTagInclude: 0,
+    twigTagSection: 0,
+    twigTagSections: 0,
+    twigTagLayout: 0,
+    twigTagRule: {
+      type: ConcreteNodeTypes.TwigTag,
       name: 3,
       markup(nodes: Node[]) {
         const markupNode = nodes[6];
@@ -710,31 +700,31 @@ function toCST<T>(
       locEnd,
     },
 
-    liquidTagLiquid: 0,
-    liquidTagLiquidMarkup(tagMarkup: Node) {
-      const res = grammars['LiquidStatement'].match(tagMarkup.sourceString, 'Node');
+    twigTagTwig: 0,
+    twigTagTwigMarkup(tagMarkup: Node) {
+      const res = grammars['TwigStatement'].match(tagMarkup.sourceString, 'Node');
 
       if (res.failed()) {
-        throw new LiquidHTMLCSTParsingError(res);
+        throw new CraftTwigCSTParsingError(res);
       }
 
       // We're reparsing with a different startIdx
-      liquidStatementOffset = tagMarkup.source.startIdx;
+      twigStatementOffset = tagMarkup.source.startIdx;
       const subCST = toAST(res, {
         ...HelperMappings,
-        ...LiquidMappings,
-        ...LiquidStatement,
+        ...TwigMappings,
+        ...TwigStatement,
       });
-      liquidStatementOffset = 0;
+      twigStatementOffset = 0;
 
       return subCST;
     },
 
-    liquidTagEchoMarkup: 0,
-    liquidTagSectionMarkup: 0,
-    liquidTagSectionsMarkup: 0,
-    liquidTagLayoutMarkup: 0,
-    liquidTagAssignMarkup: {
+    twigTagEchoMarkup: 0,
+    twigTagSectionMarkup: 0,
+    twigTagSectionsMarkup: 0,
+    twigTagLayoutMarkup: 0,
+    twigTagAssignMarkup: {
       type: ConcreteNodeTypes.AssignMarkup,
       name: 0,
       value: 4,
@@ -743,7 +733,7 @@ function toCST<T>(
       source,
     },
 
-    liquidTagCycleMarkup: {
+    twigTagCycleMarkup: {
       type: ConcreteNodeTypes.CycleMarkup,
       groupName: 0,
       args: 3,
@@ -752,7 +742,7 @@ function toCST<T>(
       source,
     },
 
-    liquidTagRenderMarkup: {
+    twigTagRenderMarkup: {
       type: ConcreteNodeTypes.RenderMarkup,
       snippet: 0,
       variable: 1,
@@ -773,8 +763,8 @@ function toCST<T>(
     },
     renderAliasExpression: 3,
 
-    liquidDrop: {
-      type: ConcreteNodeTypes.LiquidDrop,
+    twigDrop: {
+      type: ConcreteNodeTypes.TwigDrop,
       markup: 3,
       whitespaceStart: 1,
       whitespaceEnd: 4,
@@ -783,11 +773,11 @@ function toCST<T>(
       source,
     },
 
-    liquidDropCases: 0,
-    liquidExpression: 0,
-    liquidDropBaseCase: (sw: Node) => sw.sourceString.trimEnd(),
-    liquidVariable: {
-      type: ConcreteNodeTypes.LiquidVariable,
+    twigDropCases: 0,
+    twigExpression: 0,
+    twigDropBaseCase: (sw: Node) => sw.sourceString.trimEnd(),
+    twigVariable: {
+      type: ConcreteNodeTypes.TwigVariable,
       expression: 0,
       filters: 1,
       rawSource: (tokens: Node[]) =>
@@ -799,8 +789,8 @@ function toCST<T>(
       source,
     },
 
-    liquidFilter: {
-      type: ConcreteNodeTypes.LiquidFilter,
+    twigFilter: {
+      type: ConcreteNodeTypes.TwigFilter,
       name: 3,
       locStart,
       locEnd,
@@ -827,8 +817,8 @@ function toCST<T>(
       source,
     },
 
-    liquidString: 0,
-    liquidDoubleQuotedString: {
+    twigString: 0,
+    twigDoubleQuotedString: {
       type: ConcreteNodeTypes.String,
       single: () => false,
       value: 1,
@@ -836,7 +826,7 @@ function toCST<T>(
       locEnd,
       source,
     },
-    liquidSingleQuotedString: {
+    twigSingleQuotedString: {
       type: ConcreteNodeTypes.String,
       single: () => true,
       value: 1,
@@ -845,7 +835,7 @@ function toCST<T>(
       source,
     },
 
-    liquidNumber: {
+    twigNumber: {
       type: ConcreteNodeTypes.Number,
       value: 0,
       locStart,
@@ -853,11 +843,11 @@ function toCST<T>(
       source,
     },
 
-    liquidLiteral: {
-      type: ConcreteNodeTypes.LiquidLiteral,
+    twigLiteral: {
+      type: ConcreteNodeTypes.TwigLiteral,
       value: (tokens: Node[]) => {
-        const keyword = tokens[0].sourceString as keyof typeof LiquidLiteralValues;
-        return LiquidLiteralValues[keyword];
+        const keyword = tokens[0].sourceString as keyof typeof TwigLiteralValues;
+        return TwigLiteralValues[keyword];
       },
       keyword: 0,
       locStart,
@@ -865,7 +855,7 @@ function toCST<T>(
       source,
     },
 
-    liquidRange: {
+    twigRange: {
       type: ConcreteNodeTypes.Range,
       start: 2,
       end: 6,
@@ -874,7 +864,7 @@ function toCST<T>(
       source,
     },
 
-    liquidVariableLookup: {
+    twigVariableLookup: {
       type: ConcreteNodeTypes.VariableLookup,
       name: 0,
       lookups: 1,
@@ -906,10 +896,10 @@ function toCST<T>(
     tagMarkup: (n: Node) => n.sourceString.trim(),
   };
 
-  const LiquidStatement: Mapping = {
-    LiquidStatement: 0,
-    liquidTagOpenRule: {
-      type: ConcreteNodeTypes.LiquidTagOpen,
+  const TwigStatement: Mapping = {
+    TwigStatement: 0,
+    twigTagOpenRule: {
+      type: ConcreteNodeTypes.TwigTagOpen,
       name: 0,
       markup(nodes: Node[]) {
         const markupNode = nodes[2];
@@ -926,8 +916,8 @@ function toCST<T>(
       source,
     },
 
-    liquidTagClose: {
-      type: ConcreteNodeTypes.LiquidTagClose,
+    twigTagClose: {
+      type: ConcreteNodeTypes.TwigTagClose,
       name: 1,
       whitespaceStart: null,
       whitespaceEnd: null,
@@ -936,8 +926,8 @@ function toCST<T>(
       source,
     },
 
-    liquidTagRule: {
-      type: ConcreteNodeTypes.LiquidTag,
+    twigTagRule: {
+      type: ConcreteNodeTypes.TwigTag,
       name: 0,
       markup(nodes: Node[]) {
         const markupNode = nodes[2];
@@ -954,8 +944,8 @@ function toCST<T>(
       source,
     },
 
-    liquidRawTagImpl: {
-      type: ConcreteNodeTypes.LiquidRawTag,
+    twigRawTagImpl: {
+      type: ConcreteNodeTypes.TwigRawTag,
       name: 0,
       body: 4,
       whitespaceStart: null,
@@ -965,17 +955,17 @@ function toCST<T>(
       locStart,
       locEnd: locEndSecondToLast,
       source,
-      blockStartLocStart: (tokens: Node[]) => liquidStatementOffset + tokens[0].source.startIdx,
-      blockStartLocEnd: (tokens: Node[]) => liquidStatementOffset + tokens[2].source.endIdx,
-      blockEndLocStart: (tokens: Node[]) => liquidStatementOffset + tokens[5].source.startIdx,
-      blockEndLocEnd: (tokens: Node[]) => liquidStatementOffset + tokens[5].source.endIdx,
+      blockStartLocStart: (tokens: Node[]) => twigStatementOffset + tokens[0].source.startIdx,
+      blockStartLocEnd: (tokens: Node[]) => twigStatementOffset + tokens[2].source.endIdx,
+      blockEndLocStart: (tokens: Node[]) => twigStatementOffset + tokens[5].source.startIdx,
+      blockEndLocEnd: (tokens: Node[]) => twigStatementOffset + tokens[5].source.endIdx,
     },
 
-    liquidBlockComment: {
-      type: ConcreteNodeTypes.LiquidRawTag,
+    twigBlockComment: {
+      type: ConcreteNodeTypes.TwigRawTag,
       name: 'comment',
       body: (tokens: Node[]) =>
-        // We want this to behave like LiquidRawTag, so we have to do some
+        // We want this to behave like TwigRawTag, so we have to do some
         // shenanigans to make it behave the same while also supporting
         // nested comments
         //
@@ -989,14 +979,14 @@ function toCST<T>(
       locStart,
       locEnd,
       source,
-      blockStartLocStart: (tokens: Node[]) => liquidStatementOffset + tokens[0].source.startIdx,
-      blockStartLocEnd: (tokens: Node[]) => liquidStatementOffset + tokens[0].source.endIdx,
-      blockEndLocStart: (tokens: Node[]) => liquidStatementOffset + tokens[4].source.startIdx,
-      blockEndLocEnd: (tokens: Node[]) => liquidStatementOffset + tokens[4].source.endIdx,
+      blockStartLocStart: (tokens: Node[]) => twigStatementOffset + tokens[0].source.startIdx,
+      blockStartLocEnd: (tokens: Node[]) => twigStatementOffset + tokens[0].source.endIdx,
+      blockEndLocStart: (tokens: Node[]) => twigStatementOffset + tokens[4].source.startIdx,
+      blockEndLocEnd: (tokens: Node[]) => twigStatementOffset + tokens[4].source.endIdx,
     },
 
-    liquidInlineComment: {
-      type: ConcreteNodeTypes.LiquidTag,
+    twigInlineComment: {
+      type: ConcreteNodeTypes.TwigTag,
       name: 0,
       markup: markupTrimEnd(2),
       whitespaceStart: null,
@@ -1007,7 +997,7 @@ function toCST<T>(
     },
   };
 
-  const LiquidHTMLMappings: Mapping = {
+  const CraftTwigMappings: Mapping = {
     Node(frontmatter: Node, nodes: Node) {
       const self = this as any;
       const frontmatterNode =
@@ -1148,8 +1138,8 @@ function toCST<T>(
 
   const defaultMappings = {
     HelperMappings,
-    LiquidMappings,
-    LiquidHTMLMappings,
+    TwigMappings,
+    CraftTwigMappings,
   };
 
   const selectedMappings = cstMappings.reduce(

@@ -77,8 +77,8 @@ prettier --plugin . --write path/to/files.twig
 ### Adding new integration tests
 
 - Copy any of the folder in the `test/` directory and rename it to something appropriate.
-- In the `index.liquid` fixture file, type code that should be made prettier
-- In the `fixed.liquid` fixture file, type what you'd expect the plugin to output
+- In the `index.twig` fixture file, type code that should be made prettier
+- In the `fixed.twig` fixture file, type what you'd expect the plugin to output
 
 ## How to contribute
 
