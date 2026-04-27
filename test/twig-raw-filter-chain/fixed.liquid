@@ -96,6 +96,14 @@ It should keep short coalescing chains in raw set assignments on one line
 printWidth: 100
 {% set heading = entry.heading ?? entry.hyperlink.element.title ?? null %}
 
+It should trim spaces inside parenthesized raw expressions
+printWidth: 100
+{%
+  set label =
+    button.label ??
+    (isLinkField ? button.hyperlink.label ?? 'Learn More' : isHyperField ? button.hyperlink.getText('Learn More') : null)
+%}
+
 It should indent method chains in raw set assignments
 printWidth: 80
 {%

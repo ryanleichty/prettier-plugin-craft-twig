@@ -70,6 +70,7 @@ Liquid <: Helpers {
     | liquidTagBaseCase
 
   liquidTagOpenStrict =
+    | liquidTagOpenSet
     | liquidTagOpenCapture
     | liquidTagOpenForm
     | liquidTagOpenFor
@@ -83,7 +84,7 @@ Liquid <: Helpers {
     | liquidTagOpenStrict
     | liquidTagOpenBaseCase
 
-  liquidTagClose = "{%" "-"? space* "end" blockName space* tagMarkup "-"? "%}"
+  liquidTagClose = "{%" "-"? space* "end" blockCloseName space* tagMarkup "-"? "%}"
 
   // These two are the same but transformed differently
   liquidTagRule<name, markup> =
@@ -105,6 +106,7 @@ Liquid <: Helpers {
   liquidTagIncrement = liquidTagRule<"increment", variableSegmentAsLookupMarkup>
   liquidTagDecrement = liquidTagRule<"decrement", variableSegmentAsLookupMarkup>
   liquidTagOpenCapture = liquidTagOpenRule<"capture", variableSegmentAsLookupMarkup>
+  liquidTagOpenSet = liquidTagOpenRule<"set", variableSegmentAsLookupMarkup>
   variableSegmentAsLookupMarkup = variableSegmentAsLookup space*
 
   liquidTagSection = liquidTagRule<"section", liquidTagSectionMarkup>
@@ -305,6 +307,10 @@ Liquid <: Helpers {
     | "verbatim"
     | "with"
     ) endOfIdentifier
+  blockCloseName =
+    ( blockName
+    | "set"
+    ) endOfIdentifier
 }
 
 LiquidStatement <: Liquid {
@@ -343,7 +349,7 @@ LiquidStatement <: Liquid {
     := (name ~identifierCharacter) space* markup &liquidStatementEnd
 
   liquidTagClose
-    := "end" (blockName ~identifierCharacter) space* tagMarkup &liquidStatementEnd
+    := "end" (blockCloseName ~identifierCharacter) space* tagMarkup &liquidStatementEnd
 
   liquidRawTagImpl<name>
     := (name ~identifierCharacter) space* tagMarkup newline

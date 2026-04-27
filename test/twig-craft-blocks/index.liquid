@@ -34,3 +34,14 @@ It should remove an empty line after an opening HTML tag
 <h3>{{ heading }}</h3>
 {% endif %}
 </div>
+
+It should indent block set bodies
+{% set navigation %}
+<div class="Carousel__navigation">
+{% if slotContent %}
+{{ slotContent|raw }}
+{% endif %}
+
+{% include '_components/carousel-buttons' only %}
+</div>
+{% endset %}

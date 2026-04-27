@@ -1,21 +1,18 @@
 {
   "name": "prettier-plugin-craft-twig",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Prettier Craft CMS Twig/HTML plugin",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wearedestination/prettier-plugin-craft-twig.git"
+    "url": "git+https://github.com/ryanleichty/prettier-plugin-craft-twig.git"
   },
-  "author": "Andy Palmer <andy.palmer@wearedestination.com>",
-  "contributors": [
-    "CP Clermont <@charlespwd>"
-  ],
+  "author": "Ryan Leichty <ryan.leichty@gmail.com>",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "homepage": "https://github.com/wearedestination/prettier-plugin-craft-twig",
+  "homepage": "https://github.com/ryanleichty/prettier-plugin-craft-twig",
   "bugs": {
-    "url": "https://github.com/wearedestination/prettier-plugin-craft-twig/issues"
+    "url": "https://github.com/ryanleichty/prettier-plugin-craft-twig/issues"
   },
   "files": [
     "grammar/*",

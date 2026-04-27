@@ -14,6 +14,7 @@ export const TWIG_CRAFT_PAIRED_TAGS = [
   'paginate',
   'sandbox',
   'script',
+  'set',
   'switch',
   'tag',
   'verbatim',
@@ -32,13 +33,7 @@ export const TWIG_CRAFT_RAW_TAGS = [
   'verbatim',
 ] as const;
 
-export const TWIG_CRAFT_BRANCH_TAGS = [
-  'case',
-  'default',
-  'else',
-  'elseif',
-  'elsif',
-] as const;
+export const TWIG_CRAFT_BRANCH_TAGS = ['case', 'default', 'else', 'elseif', 'elsif'] as const;
 
 export const TWIG_CRAFT_STANDALONE_TAGS = [
   'dd',
@@ -60,7 +55,6 @@ export const TWIG_CRAFT_STANDALONE_TAGS = [
   'requireGuest',
   'requireLogin',
   'requirePermission',
-  'set',
   'use',
 ] as const;
 

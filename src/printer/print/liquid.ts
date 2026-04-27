@@ -316,6 +316,7 @@ function printNamedLiquidBlockStart(
     }
 
     case NamedTags.capture:
+    case NamedTags.set:
     case NamedTags.increment:
     case NamedTags.decrement:
     case NamedTags.layout:
@@ -656,6 +657,7 @@ function printRawTwigExpression(expression: string): Doc | null {
   return (
     printRawTwigTernary(expression) ??
     printRawTwigCoalescingChain(expression) ??
+    printRawTwigParenthesizedExpression(expression) ??
     printRawTwigMethodChainExpression(expression) ??
     printRawTwigCallExpression(expression) ??
     printRawTwigFilterChainExpression(expression) ??
@@ -673,10 +675,47 @@ function printRawTwigCoalescingChain(expression: string): Doc | null {
       line,
       chain.map((part, index) =>
         index < chain.length - 1
-          ? [part.expression, ' ', chain[index + 1].operator!]
-          : part.expression,
+          ? [
+              printRawTwigNonCoalescingExpression(part.expression) ?? part.expression,
+              ' ',
+              chain[index + 1].operator!,
+            ]
+          : printRawTwigNonCoalescingExpression(part.expression) ?? part.expression,
       ),
     ),
+  );
+}
+
+function printRawTwigNonCoalescingExpression(expression: string): Doc | null {
+  return (
+    printRawTwigTernary(expression) ??
+    printRawTwigParenthesizedExpression(expression) ??
+    printRawTwigMethodChainExpression(expression) ??
+    printRawTwigCallExpression(expression) ??
+    printRawTwigFilterChainExpression(expression) ??
+    printRawTwigArrayLiteral(expression) ??
+    printRawTwigObjectLiteral(expression)
+  );
+}
+
+function printRawTwigParenthesizedExpression(expression: string): Doc | null {
+  const trimmed = expression.trim();
+  if (!trimmed.startsWith('(') || !trimmed.endsWith(')')) return null;
+
+  const body = trimmed.slice(1, -1).trim();
+  if (!body) return '()';
+
+  return group(['(', printRawTwigNonParenthesizedExpression(body) ?? body, ')']);
+}
+
+function printRawTwigNonParenthesizedExpression(expression: string): Doc | null {
+  return (
+    printRawTwigTernary(expression) ??
+    printRawTwigMethodChainExpression(expression) ??
+    printRawTwigCallExpression(expression) ??
+    printRawTwigFilterChainExpression(expression) ??
+    printRawTwigArrayLiteral(expression) ??
+    printRawTwigObjectLiteral(expression)
   );
 }
 
