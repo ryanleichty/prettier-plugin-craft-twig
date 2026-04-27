@@ -54,11 +54,15 @@
     "@vitest/coverage-v8": "^4.1.5",
     "glob": "^13.0.6",
     "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",
     "tsc-alias": "^1.8.16",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
     "vitest": "^4.1.5"
+  },
+  "lint-staged": {
+    "{src,test}/**/*.ts": "prettier --write --ignore-unknown"
   },
   "dependencies": {
     "html-styles": "^1.0.0",
